@@ -3,7 +3,7 @@
   "pack": "hard",
   "seed": 402,
   "level": "hard",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Verrin Museum of Art",
   "date": "2026-07-14",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Lantern Gallery",
     "wing": "west"
   },
-  "last_seen": "2026-07-14T22:06",
+  "last_seen": "2026-07-14T22:20",
   "discovered": "2026-07-14T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "west",
-        "start": "22:06",
+        "start": "22:20",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "C-746",
+        "a": "C-663",
+        "b": "G-881"
+      },
+      {
+        "a": "G-647",
+        "b": "G-743"
+      },
+      {
+        "a": "C-454",
         "b": "G-533"
-      },
-      {
-        "a": "E-1065",
-        "b": "G-551"
-      },
-      {
-        "a": "C-746",
-        "b": "E-1150"
       }
     ]
   }

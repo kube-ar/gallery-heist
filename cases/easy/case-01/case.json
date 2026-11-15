@@ -3,7 +3,7 @@
   "pack": "easy",
   "seed": 201,
   "level": "easy",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Belvaro House Museum",
   "date": "2026-04-09",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Portrait Gallery",
     "wing": "east"
   },
-  "last_seen": "2026-04-09T22:11",
+  "last_seen": "2026-04-09T21:56",
   "discovered": "2026-04-09T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "east",
-        "start": "22:11",
+        "start": "21:56",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "E-1607",
-        "b": "G-680"
-      },
-      {
-        "a": "G-469",
-        "b": "E-1774"
-      },
-      {
-        "a": "E-1899",
+        "a": "G-139",
         "b": "G-304"
+      },
+      {
+        "a": "E-1774",
+        "b": "G-908"
+      },
+      {
+        "a": "E-1483",
+        "b": "E-1607"
       }
     ]
   }

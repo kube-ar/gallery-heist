@@ -1,0 +1,29 @@
+# Shapes: a closed-world check on top of an open-world graph (reference version, spoilers).
+@prefix :   <https://kube.ar/heist/ontology#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:SwipeShape a sh:NodeShape ;
+    sh:targetClass :Swipe ;
+    sh:property [ sh:path :badge ; sh:minCount 1 ; sh:maxCount 1 ; sh:class :Badge ;
+                  sh:message "A swipe must name exactly one known badge." ] ;
+    sh:property [ sh:path :door ; sh:minCount 1 ; sh:maxCount 1 ; sh:class :Door ] ;
+    sh:property [ sh:path :granted ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path :at ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] .
+
+:BadgeShape a sh:NodeShape ;
+    sh:targetClass :Badge ;
+    sh:property [ sh:path [ sh:inversePath :holds ] ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "A badge must have exactly one holder." ] .
+
+:TransferShape a sh:NodeShape ;
+    sh:targetClass :Transfer ;
+    sh:property [ sh:path :amount ; sh:minCount 1 ; sh:minExclusive 0 ;
+                  sh:message "A transfer moves a positive amount." ] ;
+    sh:property [ sh:path :fromAccount ; sh:minCount 1 ; sh:maxCount 1 ; sh:class :Account ] ;
+    sh:property [ sh:path :toAccount ; sh:minCount 1 ; sh:maxCount 1 ; sh:class :Account ] .
+
+:GuestShape a sh:NodeShape ;
+    sh:targetClass :Guest ;
+    sh:property [ sh:path :invitedBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class :StaffMember ;
+                  sh:message "A guest is invited by one member of staff." ] .

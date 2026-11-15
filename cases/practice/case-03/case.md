@@ -2,7 +2,7 @@
 
 On the night of 2026-02-14, the Belvaro House Museum held its gala. At 23:45 a guard
 on a round found an empty frame in the Miniatures Room (east wing):
-*The Blue Staircase* by Oswin Tarrant (1897) was gone. A guard's round at 22:59
+*The Blue Staircase* by Oswin Tarrant (1897) was gone. A guard's round at 22:13
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

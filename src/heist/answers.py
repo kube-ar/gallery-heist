@@ -83,23 +83,29 @@ def in_wing(case: Case, wing: str, start: datetime, end: datetime) -> set[str]:
     return {p for p in found if p}
 
 
-def links(case: Case) -> dict[str, set[str]]:
+def links(case: Case, transfers: bool = True, outsiders: bool = True) -> dict[str, set[str]]:
     """Who is directly linked to whom.
 
     Two parties are linked when they called each other, sent each other money, sat at the
-    same dinner table, one invited the other, or they work for the same contractor.
+    same dinner table, one invited the other, or they work for the same company. Pass
+    `transfers=False` or `outsiders=False` to leave out money links, or everyone known only by
+    a phone number (the question generator uses this to pick pairs that need them).
     """
     parties = Parties(case)
     adj: dict[str, set[str]] = defaultdict(set)
+    listed = {s.employee_id for s in case.staff} | {g.guest_id for g in case.guests}
+    listed |= {w.contractor_id for w in case.contractors}
 
     def link(a: str | None, b: str | None) -> None:
+        if not outsiders and (a not in listed or b not in listed):
+            return
         if a and b and a != b:
             adj[a].add(b)
             adj[b].add(a)
 
     for c in case.calls:
         link(parties.party(c.caller), parties.party(c.callee))
-    for t in case.transfers:
+    for t in case.transfers if transfers else []:
         link(parties.party(t.from_account), parties.party(t.to_account))
     tables: dict[int, list[str]] = defaultdict(list)
     for s in case.seating:
@@ -180,3 +186,103 @@ def counts(case: Case) -> dict[str, int]:
         "calls": len(case.calls),
         "transfers": len(case.transfers),
     }
+
+
+# ── Milestone 2 ───────────────────────────────────────────────────────────────
+
+
+def rooms_in_wing(case: Case, wing: str) -> set[str]:
+    return {r.room_id for r in case.rooms if r.wing == wing}
+
+
+def unguarded_ways_in(case: Case, wing: str) -> set[str]:
+    """Doors from outside the wing into it that log nothing: no reader (archways, fire doors...)."""
+    inside = rooms_in_wing(case, wing)
+    return {d.door_id for d in case.doors if not d.has_reader and ((d.room_a in inside) != (d.room_b in inside))}
+
+
+def swipes_at(case: Case, door_id: str, start: datetime, end: datetime) -> list[tuple[datetime, str, bool]]:
+    return sorted(
+        (s.time, s.badge_id, s.granted) for s in case.swipes if s.door_id == door_id and start <= s.time < end
+    )
+
+
+SOURCES = ("hr", "events", "vendors", "security", "telecom", "finance")
+
+
+def sources_of(case: Case, person: str) -> set[str]:
+    """Which systems hold a fact about this person (by their id, badge, phone or account)."""
+    out = set()
+    staff = {s.employee_id: s for s in case.staff}
+    guests = {g.guest_id: g for g in case.guests}
+    workers = {w.contractor_id: w for w in case.contractors}
+    record = staff.get(person) or guests.get(person) or workers.get(person)
+    if record is None:
+        return out
+    phone = record.phone
+    if person in staff:
+        out.add("hr")
+    if (
+        person in guests
+        or any(g.invited_by == person for g in case.guests)
+        or any(s.attendee_id == person for s in case.seating)
+    ):
+        out.add("events")
+    if person in workers:
+        out.add("vendors")
+    if any(b.holder_id == person for b in case.badges):
+        out.add("security")
+    if any(phone in (c.caller, c.callee) for c in case.calls):
+        out.add("telecom")
+    if any(a.contact_phone == phone for a in case.accounts):
+        out.add("finance")
+    return out
+
+
+def regions(case: Case) -> dict[str, frozenset[str]]:
+    """Each room's region: every room you can walk to from it without passing a card reader.
+
+    Archways and fire doors count as passable: a door that logs nothing can't prove nobody used it.
+    """
+    adj: dict[str, set[str]] = defaultdict(set)
+    for d in case.doors:
+        if not d.has_reader:
+            adj[d.room_a].add(d.room_b)
+            adj[d.room_b].add(d.room_a)
+    out: dict[str, frozenset[str]] = {}
+    for r in case.rooms:
+        if r.room_id in out:
+            continue
+        seen, stack = {r.room_id}, [r.room_id]
+        while stack:
+            for nxt in adj[stack.pop()]:
+                if nxt not in seen:
+                    seen.add(nxt)
+                    stack.append(nxt)
+        region = frozenset(seen)
+        for room in region:
+            out[room] = region
+    return out
+
+
+def alibi(case: Case, person: str, wing: str, start: datetime, end: datetime) -> str:
+    """'placed', 'elsewhere' or 'unknown', reading the keycard log under the open-world assumption.
+
+    placed: their badge was in a room of the wing at some moment in [start, end).
+    elsewhere: for the whole window their badge was somewhere the wing can't be reached from
+      without swiping (assuming nobody walked in behind someone else).
+    unknown: anything else: no badge, no swipe yet, or a way in that logs nothing.
+    """
+    badge = next((b.badge_id for b in case.badges if b.holder_id == person), None)
+    if badge is None:
+        return "unknown"
+    inside = rooms_in_wing(case, wing)
+    region = regions(case)
+    spans = [s for s in badge_intervals(case).get(badge, []) if s[1] < end and (s[2] is None or s[2] > start)]
+    if not spans or spans[0][1] > start:
+        return "unknown"  # the window starts before the log knows where the badge is
+    if any(room in inside for room, _, _ in spans):
+        return "placed"
+    if all(not (region[room] & inside) for room, _, _ in spans):
+        return "elsewhere"
+    return "unknown"

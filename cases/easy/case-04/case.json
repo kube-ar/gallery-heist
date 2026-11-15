@@ -3,7 +3,7 @@
   "pack": "easy",
   "seed": 204,
   "level": "easy",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Castell Moor Gallery",
   "date": "2026-05-19",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Glass Room",
     "wing": "west"
   },
-  "last_seen": "2026-05-19T22:17",
+  "last_seen": "2026-05-19T21:48",
   "discovered": "2026-05-19T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "west",
-        "start": "22:17",
+        "start": "21:48",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "G-547",
+        "a": "C-692",
+        "b": "E-1572"
+      },
+      {
+        "a": "C-692",
         "b": "E-1065"
       },
       {
-        "a": "E-1065",
-        "b": "E-1904"
-      },
-      {
-        "a": "G-904",
-        "b": "G-751"
+        "a": "G-785",
+        "b": "G-904"
       }
     ]
   }

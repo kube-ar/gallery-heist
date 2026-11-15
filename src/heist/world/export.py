@@ -14,6 +14,7 @@ import random
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from .documents import documents, signin_sheet
 from .simulate import GENERATOR_VERSION, OUTSIDE, World
 
 ROLE_TITLES = {
@@ -141,6 +142,22 @@ def export(world: World, folder: Path, case_id: str, pack: str, hide_truth: bool
         [[stamp(world, x.time), x.source, x.target, x.amount, x.memo] for x in world.transfers],
     )
 
+    # Text: the front desk's handwritten sheet, and documents written after the theft.
+    signins, plus_ones = signin_sheet(world)
+    _write(
+        folder / "frontdesk/signin.csv",
+        ["time", "name", "phone", "visiting"],
+        [[stamp(world, r.time), r.name, r.phone, r.visiting] for r in signins],
+    )
+    docs = documents(world)
+    _write(
+        folder / "documents/index.csv",
+        ["doc_id", "kind", "title", "author", "date"],
+        [[d.id, d.kind, d.title, d.author_as_written, d.date] for d in docs],
+    )
+    for d in docs:
+        (folder / "documents" / f"{d.id}.txt").write_text(d.text, encoding="utf-8")
+
     c = world.crime
     assert c is not None
     room = v.rooms[c.room]
@@ -161,6 +178,10 @@ def export(world: World, folder: Path, case_id: str, pack: str, hide_truth: bool
     (folder / "case.md").write_text(_briefing(world, meta), encoding="utf-8")
 
     truth = _truth(world)
+    truth["people"] += [{"id": x.id, "name": x.name, "kind": x.kind, "role": x.role, "keys": []} for x in plus_ones]
+    native = {p.id: p.native_id for p in world.people.values()}
+    truth["signin"] = [native.get(r.person) if r.person else None for r in signins]
+    truth["documents"] = {d.id: {"author": d.author, **d.gold()} for d in docs}
     if hide_truth:
         salt = hashlib.sha256(f"{world.seed}:salt".encode()).hexdigest()[:16]
         culprit = world.people[c.culprit].native_id or ""

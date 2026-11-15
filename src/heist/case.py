@@ -127,6 +127,24 @@ class Transfer:
     reference: str
 
 
+@dataclass(frozen=True)
+class SignIn:
+    time: datetime
+    name: str  # as the guest wrote it
+    phone: str  # as written: often missing, sometimes misread
+    visiting: str
+
+
+@dataclass(frozen=True)
+class Document:
+    doc_id: str
+    kind: str  # statement | email | report | press
+    title: str
+    author: str  # as written
+    date: str
+    text: str
+
+
 @dataclass
 class Case:
     id: str
@@ -145,6 +163,8 @@ class Case:
     calls: list[Call] = field(default_factory=list)
     accounts: list[Account] = field(default_factory=list)
     transfers: list[Transfer] = field(default_factory=list)
+    signins: list[SignIn] = field(default_factory=list)
+    documents: list[Document] = field(default_factory=list)
 
     @property
     def date(self) -> datetime:
@@ -213,6 +233,16 @@ def load_case(name: str | Path) -> Case:
         Transfer(_dt(r["time"]), r["from_account"], r["to_account"], int(r["amount"]), r["reference"])
         for r in _rows(path / "finance/transfers.csv")
     ]
+    signin = path / "frontdesk/signin.csv"
+    if signin.exists():
+        c.signins = [SignIn(_dt(r["time"]), r["name"], r["phone"], r["visiting"]) for r in _rows(signin)]
+    index = path / "documents/index.csv"
+    if index.exists():
+        c.documents = [
+            Document(r["doc_id"], r["kind"], r["title"], r["author"], r["date"],
+                     (path / "documents" / f"{r['doc_id']}.txt").read_text(encoding="utf-8"))
+            for r in _rows(index)
+        ]  # fmt: skip
     return c
 
 

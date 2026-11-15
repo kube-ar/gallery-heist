@@ -2,7 +2,7 @@
 
 On the night of 2026-04-07, the Ostrander Collection held its gala. At 23:45 a guard
 on a round found an empty frame in the Miniatures Room (east wing):
-*A Quiet Street in Delft Light* by Elsa Marrow (1930) was gone. A guard's round at 22:02
+*A Quiet Street in Delft Light* by Elsa Marrow (1930) was gone. A guard's round at 22:50
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

@@ -20,7 +20,7 @@ on the site, next to the lessons they use. This repo holds the code, the cases a
 | # | Milestone | Course chapter | Status |
 |---|---|---|---|
 | 1 | [The timeline board](https://kube.ar/graphrag/project/gallery-heist/timeline-board): seven systems in one graph | GraphRAG · Why a graph | ready |
-| 2 | The case ontology | GraphRAG · Designing the graph | coming |
+| 2 | [The case ontology](https://kube.ar/graphrag/project/gallery-heist/case-ontology): RDF, shapes, open-world alibis, the sign-in sheet | GraphRAG · Designing the graph | ready |
 | 3 | Reading the statements | GraphRAG · Building the graph | coming |
 | 4 | Ask the board | GraphRAG · Storing and querying | coming |
 | 5 | Solve rate | GraphRAG · Measuring quality | coming |
@@ -38,7 +38,8 @@ uv run heist cases                  # the case packs
 uv run heist show practice/case-01  # a case's briefing
 ```
 
-Python 3.12 or newer. Milestone 1 needs no API key and no database.
+Python 3.12 or newer. Milestones 1 and 2 need no API key and no database. The first run downloads a
+small embedding model (about 30 MB), so it needs the network once.
 
 ## How a milestone works
 
@@ -69,15 +70,17 @@ and come back to go deeper whenever you're curious.
 |---|---|---|
 | `practice` | 3 | Small cast; the thief works inside the museum |
 | `easy` | 4 | A few more people, the same kind of theft |
-| `medium` | 4 | A bigger cast; in some cases a borrowed badge makes the keycard log name the wrong person |
-| `hard` | 4 | A fire door that logs nothing, and money that goes around in loops |
+| `medium` | 4 | A bigger cast, money going around in loops, and in some cases a borrowed badge that makes the keycard log name the wrong person |
+| `hard` | 4 | A fire door that logs nothing, and loops in the money that mean nothing at all |
 | `final` | 3 | All of it. The answers are hashed, so you can't read them by accident |
 
 Each case folder holds one export per system (`hr/`, `events/`, `vendors/`, `security/`,
-`facilities/`, `telecom/`, `finance/`), a briefing (`case.md`) and `case.json` with the questions
-the checks ask. `truth.json` is what really happened: the checks read it, you shouldn't.
+`facilities/`, `telecom/`, `finance/`), the front desk's handwritten sign-in sheet (`frontdesk/`),
+the statements, emails and reports written after the theft (`documents/`), a briefing (`case.md`)
+and `case.json` with the questions the checks ask. `truth.json` is what really happened: the checks read it, you shouldn't.
 
-Want more? `uv run heist generate --seed 7 --level hard` builds a new case in `cases/mine/`.
+Want more? `uv run heist generate --seed 7 --level hard` builds a new case in `cases/mine/` (the
+final pack's seeds are refused, so its answers stay hidden).
 
 ## License
 

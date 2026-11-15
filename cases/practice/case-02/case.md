@@ -2,7 +2,7 @@
 
 On the night of 2026-09-19, the Ostrander Collection held its gala. At 23:45 a guard
 on a round found an empty frame in the Print Room (west wing):
-*Portrait of a Cartographer* by Elsa Marrow (1927) was gone. A guard's round at 22:36
+*Portrait of a Cartographer* by Elsa Marrow (1927) was gone. A guard's round at 21:52
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

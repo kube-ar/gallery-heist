@@ -2,6 +2,7 @@
 
 import importlib
 import importlib.util
+import os
 
 import pytest
 
@@ -24,6 +25,10 @@ def test_reference_passes(mid):
     assert failed == []
 
 
+UPSTREAM = os.environ.get("GITHUB_REPOSITORY", "") == "kube-ar/gallery-heist" or os.environ.get("HEIST_UPSTREAM")
+
+
+@pytest.mark.skipif(not UPSTREAM, reason="your copy has your code in the starter files, not the stubs")
 @pytest.mark.parametrize("mid", sorted(MILESTONES))
 def test_starter_is_not_started(mid):
     m = MILESTONES[mid]

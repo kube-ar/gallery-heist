@@ -3,7 +3,7 @@
   "pack": "medium",
   "seed": 304,
   "level": "medium",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Ostrander Collection",
   "date": "2026-04-07",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Miniatures Room",
     "wing": "east"
   },
-  "last_seen": "2026-04-07T22:02",
+  "last_seen": "2026-04-07T22:50",
   "discovered": "2026-04-07T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "east",
-        "start": "22:02",
+        "start": "22:50",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "G-798",
-        "b": "G-573"
+        "a": "C-272",
+        "b": "G-204"
       },
       {
-        "a": "E-1828",
-        "b": "E-1907"
+        "a": "G-182",
+        "b": "G-648"
       },
       {
-        "a": "E-1216",
-        "b": "C-323"
+        "a": "G-554",
+        "b": "G-815"
       }
     ]
   }

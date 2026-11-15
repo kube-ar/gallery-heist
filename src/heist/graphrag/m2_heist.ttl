@@ -1,0 +1,21 @@
+# Your Gallery Heist ontology. Milestone 2: https://kube.ar/graphrag/project/gallery-heist/case-ontology
+#
+# Declare every class and property your graph uses (the checks look), and align at least
+# Person to a shared vocabulary such as schema.org. One of each to start you off:
+
+@prefix :       <https://kube.ar/heist/ontology#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <https://schema.org/> .
+
+<https://kube.ar/heist/ontology> a owl:Ontology ;
+    rdfs:label "Gallery Heist" .
+
+:Person a owl:Class ;
+    rdfs:label "Person" ;
+    owl:equivalentClass schema:Person .
+
+:name a owl:DatatypeProperty ;
+    rdfs:subPropertyOf schema:name ;
+    rdfs:range xsd:string .

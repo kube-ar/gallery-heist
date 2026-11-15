@@ -2,7 +2,7 @@
 
 On the night of 2026-09-16, the Belvaro House Museum held its gala. At 23:45 a guard
 on a round found an empty frame in the Restoration Lab (east wing):
-*Still Life with Brass Scales* by Hendrik Saalberg (1925) was gone. A guard's round at 22:43
+*Still Life with Brass Scales* by Hendrik Saalberg (1925) was gone. A guard's round at 22:54
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

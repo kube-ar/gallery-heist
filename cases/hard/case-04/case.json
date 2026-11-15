@@ -3,7 +3,7 @@
   "pack": "hard",
   "seed": 404,
   "level": "hard",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Harwell Lane Gallery",
   "date": "2026-11-20",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Lantern Gallery",
     "wing": "west"
   },
-  "last_seen": "2026-11-20T22:45",
+  "last_seen": "2026-11-20T22:50",
   "discovered": "2026-11-20T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "west",
-        "start": "22:45",
+        "start": "22:50",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "E-1679",
+        "a": "E-1092",
+        "b": "E-1798"
+      },
+      {
+        "a": "C-727",
         "b": "G-963"
       },
       {
-        "a": "E-1522",
-        "b": "E-1203"
-      },
-      {
-        "a": "G-990",
-        "b": "G-516"
+        "a": "E-1956",
+        "b": "G-403"
       }
     ]
   }
