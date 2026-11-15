@@ -24,6 +24,7 @@ def clean_env(monkeypatch):
               "FIREWORKS_API_KEY", "OPENROUTER_API_KEY"):  # fmt: skip
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setattr(llm_mod, "_load_env", lambda: None)
+    monkeypatch.setenv("HEIST_LLM_CACHE", "0")
 
 
 class FakeClaude:

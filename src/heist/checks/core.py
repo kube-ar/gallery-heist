@@ -78,6 +78,9 @@ def report(milestone: Milestone, results: list[Result], lang: str = "en") -> boo
         else:
             mark, state = _color("31", "✗"), r.score
         print(f"  {mark} {r.name.ljust(width)}{state}")
+        if not r.started:
+            for line in r.notes:
+                print(_color("2", f"      {line}"))
         if r.started:
             shown = r.details[:MAX_DETAILS]
             for line in shown:
