@@ -205,5 +205,6 @@ def test_planned_investigation_runs_its_phases_then_validates():
 
     desk = reference.investigate(case, FakeLLM())
     tools = [a.tool for a in desk.log]
-    assert tools[:2] == ["floor_plan", "list_people"] and tools[-1] == "accuse"
+    # the first phase (cameras, place, room) runs together, before anything that needs it
+    assert set(tools[:4]) == {"camera_log", "floor_plan", "list_people", "keycard_log"} and tools[-1] == "accuse"
     assert desk.verdict()["solved"]
