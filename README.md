@@ -23,7 +23,7 @@ on the site, next to the lessons they use. This repo holds the code, the cases a
 | 2 | [The case ontology](https://kube.ar/graphrag/project/gallery-heist/case-ontology): RDF, shapes, open-world alibis, the sign-in sheet | GraphRAG · Designing the graph | ready |
 | 3 | [Reading the statements](https://kube.ar/graphrag/project/gallery-heist/reading-the-statements): a lexical graph, linked mentions, LLM-extracted claims checked against the log | GraphRAG · Building the graph | ready (needs an LLM) |
 | 4 | [Ask the board](https://kube.ar/graphrag/project/gallery-heist/ask-the-board): Neo4j, four retrieval routes, global search | GraphRAG · Storing and querying | ready (Neo4j; two checks need an LLM) |
-| 5 | Solve rate | GraphRAG · Measuring quality | coming |
+| 5 | [Solve rate](https://kube.ar/graphrag/project/gallery-heist/solve-rate): name the thief, then measure it like the evaluation lesson | GraphRAG · Measuring quality | ready |
 
 The detective agent (Agentic GraphRAG) follows once the board is complete.
 

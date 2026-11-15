@@ -32,8 +32,11 @@ class Result:
         self.details.append(line)
 
 
-def attempt(result: Result, fn: Callable, *args, **kwargs):
-    """Call your function. NotImplementedError marks the check as not started."""
+def attempt(result: Result, fn: Callable, *args, none_ok: bool = False, **kwargs):
+    """Call your function. NotImplementedError marks the check as not started.
+
+    A None answer counts as a forgotten return, unless `none_ok` (None is a real answer there).
+    """
     try:
         value = fn(*args, **kwargs)
     except NotImplementedError as e:
@@ -46,7 +49,7 @@ def attempt(result: Result, fn: Callable, *args, **kwargs):
         result.details.append(f"{getattr(fn, '__name__', 'your code')} raised: {tb[-1]}")
         result.details.extend("    " + line for line in tb[-5:-1])
         return None
-    if value is None:
+    if value is None and not none_ok:
         result.fail(f"{getattr(fn, '__name__', 'your function')} returned None: did it forget a return?")
     return value
 
