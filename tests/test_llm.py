@@ -140,3 +140,70 @@ def test_effort_only_applies_to_claude(monkeypatch):
     monkeypatch.setenv("HEIST_LLM_EFFORT", "high")
     assert get_llm("anthropic").effort == "high"
     assert get_llm("openai", "m").effort is None
+
+
+def test_conversation_loop_on_claude(monkeypatch):
+    from heist.llm import Conversation
+
+    replies = [
+        SimpleNamespace(content=[SimpleNamespace(type="thinking", thinking=""),
+                                 SimpleNamespace(type="tool_use", id="t1", name="lookup", input={"q": "x"})],
+                        stop_reason="tool_use", usage=SimpleNamespace(input_tokens=5, output_tokens=2)),
+        SimpleNamespace(content=[SimpleNamespace(type="text", text="done")], stop_reason="end_turn",
+                        usage=SimpleNamespace(input_tokens=5, output_tokens=1)),
+    ]  # fmt: skip
+    sent = []
+
+    class Fake:
+        def __init__(self, **kw):
+            def create(**request):
+                sent.append(request)
+                return replies[len(sent) - 1]
+
+            self.messages = SimpleNamespace(create=create)
+            self.beta = SimpleNamespace(messages=SimpleNamespace(create=create))
+
+    monkeypatch.setattr(anthropic, "Anthropic", Fake)
+    tools = [{"name": "lookup", "description": "d", "parameters": {"type": "object", "properties": {}}}]
+    convo = Conversation(get_llm("anthropic"), tools, system="s")
+    turn = convo.send("go")
+    assert [c.name for c in turn.tool_calls] == ["lookup"] and turn.tool_calls[0].arguments == {"q": "x"}
+    turn = convo.reply({"t1": {"rows": 1}}, errors={"t1"})
+    assert turn.done and turn.text == "done"
+    assert sent[0]["tools"][0]["input_schema"] == tools[0]["parameters"]
+    # the assistant's own blocks go back unchanged (thinking included), then one message with all results
+    assert sent[1]["messages"][1]["content"] is replies[0].content
+    assert sent[1]["messages"][2]["content"][0] == {"type": "tool_result", "tool_use_id": "t1", "content": '{"rows": 1}',
+                                                    "is_error": True}  # fmt: skip
+
+
+def test_conversation_loop_on_openai_compatible(monkeypatch):
+    from heist.llm import Conversation
+
+    def message(content, calls):
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content, tool_calls=calls))],
+                               usage=None)  # fmt: skip
+
+    call = SimpleNamespace(id="c1", function=SimpleNamespace(name="lookup", arguments='{"q": "x"}'))
+    replies = [message(None, [call]), message("done", None)]
+    sent = []
+
+    class Fake:
+        def __init__(self, **kw):
+            def create(**request):
+                sent.append(request)
+                return replies[len(sent) - 1]
+
+            self.chat = SimpleNamespace(completions=SimpleNamespace(create=create))
+
+    monkeypatch.setattr(openai, "OpenAI", Fake)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    tools = [{"name": "lookup", "description": "d", "parameters": {"type": "object", "properties": {}}}]
+    convo = Conversation(get_llm("openrouter", "some/model"), tools, system="s")
+    turn = convo.send("go")
+    assert turn.tool_calls[0].arguments == {"q": "x"}
+    turn = convo.reply({"c1": "ok"})
+    assert turn.done
+    assert sent[0]["tools"][0]["function"]["name"] == "lookup"
+    assert sent[1]["messages"][-1] == {"role": "tool", "tool_call_id": "c1", "content": "ok"}
+    assert sent[1]["messages"][-2]["tool_calls"][0]["function"]["arguments"] == '{"q": "x"}'

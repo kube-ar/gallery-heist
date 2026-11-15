@@ -25,7 +25,15 @@ on the site, next to the lessons they use. This repo holds the code, the cases a
 | 4 | [Ask the board](https://kube.ar/graphrag/project/gallery-heist/ask-the-board): Neo4j, four retrieval routes, global search | GraphRAG · Storing and querying | ready (Neo4j; two checks need an LLM) |
 | 5 | [Solve rate](https://kube.ar/graphrag/project/gallery-heist/solve-rate): name the thief, then measure it like the evaluation lesson | GraphRAG · Measuring quality | ready |
 
-The detective agent (Agentic GraphRAG) follows once the board is complete.
+Then the detective (the [Agentic GraphRAG](https://kube.ar/agentic-graphrag) course): an agent
+that doesn't get the files. It works the case at the precinct's desk (`heist.precinct`), where
+every record, log and interview costs minutes from the night's budget, and asks the chief for a
+warrant when it's sure.
+
+| # | Milestone | Course chapter | Status |
+|---|---|---|---|
+| d1 | [The rookie](https://kube.ar/agentic-graphrag/project/gallery-heist/the-rookie): a baseline agent, and its failures named | Agentic GraphRAG · Overview | ready (needs an LLM) |
+| d2–d8 | The rulebook, the notebook, the investigation plan, the precinct, case review, budget and clearance, the hard case | the rest of the course | coming |
 
 ## Setup
 

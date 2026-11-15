@@ -148,3 +148,40 @@ def test_model_written_queries_are_validated_then_run():
     assert rows == [{"n": len(case.transfers)}]
     assert reference.generated_query(board, "wipe it", FakeLLM("MATCH (n) DETACH DELETE n")) == []
     assert reference.store_summary(board)["people"] > 0  # the bad query never ran
+
+
+def test_rookie_loop_stops_at_the_accusation():
+    from heist.case import load_case
+    from heist.llm import ToolCall, Turn
+
+    reference = load(ROOT / MILESTONES["d1"].reference)
+    case = load_case("practice/case-01")
+    seen, found = case.meta["last_seen"][11:], case.meta["discovered"][11:]
+    script = [
+        [ToolCall("1", "rulebook", {})],
+        [ToolCall("2", "camera_log", {"start": seen, "end": found}), ToolCall("3", "keycard_log", {"room": "R34"})],
+        [
+            ToolCall(
+                "4",
+                "accuse",
+                {"culprit": "E-1415", "accomplice": "", "method": "insider", "evidence": ["camera log", "keycard log"]},
+            )
+        ],
+        [ToolCall("5", "briefing", {})],  # never reached
+    ]
+
+    class FakeConversation:
+        def __init__(self, llm, tools, system=None):
+            self.turns = iter(script)
+
+        def send(self, text):
+            return Turn("", next(self.turns))
+
+        def reply(self, results, errors=frozenset()):
+            return Turn("", next(self.turns))
+
+    reference.Conversation = FakeConversation
+    desk = reference.investigate(case, llm=None)
+    assert desk.accusation is not None and [a.tool for a in desk.log][-1] == "accuse"
+    assert "briefing" not in [a.tool for a in desk.log]
+    assert reference.failures(desk) == []  # two kinds of source, and the camera call covered the window

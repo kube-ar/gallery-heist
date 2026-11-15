@@ -76,6 +76,15 @@ MILESTONES = {
             reference="reference/graphrag/m5_solve_rate.py",
             checks="heist.checks.m5",
         ),
+        Milestone(
+            id="d1",
+            course="agentic-graphrag",
+            slug="the-rookie",
+            title="The rookie",
+            module="heist.agent.d1_the_rookie",
+            reference="reference/agent/d1_the_rookie.py",
+            checks="heist.checks.d1",
+        ),
     ]
 }
 
