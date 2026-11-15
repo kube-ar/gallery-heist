@@ -1,8 +1,8 @@
-# case-02: Woman with a Green Parasol
+# case-02: The Orange Seller
 
-On the night of 2026-04-14, the Castell Moor Gallery held its gala. At 23:45 a guard
-on a round found an empty frame in the Map Room (east wing):
-*Woman with a Green Parasol* by Mirela Danescu (1885) was gone. A guard's round at 22:30
+On the night of 2026-10-05, the Castell Moor Gallery held its gala. At 23:45 a guard
+on a round found an empty frame in the Portrait Gallery (east wing):
+*The Orange Seller* by Elsa Marrow (1915) was gone. A guard's round at 22:54
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

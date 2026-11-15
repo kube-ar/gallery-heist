@@ -2,7 +2,7 @@
 
 On the night of 2026-02-09, the Belvaro House Museum held its gala. At 23:45 a guard
 on a round found an empty frame in the Sculpture Hall (west wing):
-*Two Sisters at the Window* by Celestine Roux (1872) was gone. A guard's round at 22:13
+*Two Sisters at the Window* by Celestine Roux (1872) was gone. A guard's round at 22:18
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

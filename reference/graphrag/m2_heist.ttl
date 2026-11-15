@@ -1,0 +1,61 @@
+# The Gallery Heist ontology: a reference version (spoilers).
+@prefix :       <https://kube.ar/heist/ontology#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <https://schema.org/> .
+
+<https://kube.ar/heist/ontology> a owl:Ontology ;
+    rdfs:label "Gallery Heist" ;
+    rdfs:comment "People, places and events of one gala night, as the museum's systems recorded them." .
+
+# ── People and things ─────────────────────────────────────────────────────────
+:Person a owl:Class ; rdfs:label "Person" ; owl:equivalentClass schema:Person .
+:StaffMember a owl:Class ; rdfs:subClassOf :Person ; rdfs:label "Staff member" .
+:Guest a owl:Class ; rdfs:subClassOf :Person ; rdfs:label "Guest" .
+:Contractor a owl:Class ; rdfs:subClassOf :Person ; rdfs:label "Contract worker" .
+:Company a owl:Class ; rdfs:subClassOf schema:Organization .
+:Badge a owl:Class ; rdfs:label "Badge" .
+:Phone a owl:Class ; rdfs:label "Phone number" .
+:Account a owl:Class ; rdfs:label "Bank account" ; rdfs:subClassOf schema:BankAccount .
+:Table a owl:Class ; rdfs:label "Dinner table" .
+
+# ── Places ────────────────────────────────────────────────────────────────────
+:Wing a owl:Class ; rdfs:subClassOf schema:Place .
+:Room a owl:Class ; rdfs:subClassOf schema:Place .
+:Door a owl:Class ; rdfs:label "Door" .
+
+# ── Events: each one a node, so it can carry a time and point at several things ─
+:Event a owl:Class ; rdfs:subClassOf schema:Event .
+:Swipe a owl:Class ; rdfs:subClassOf :Event ; rdfs:label "Badge swipe" .
+:Call a owl:Class ; rdfs:subClassOf :Event ; rdfs:label "Phone call" .
+:Transfer a owl:Class ; rdfs:subClassOf :Event ; rdfs:label "Bank transfer" .
+
+# ── Properties ────────────────────────────────────────────────────────────────
+:id a owl:DatatypeProperty ; rdfs:comment "The id a system gives this thing (E-1042, B-0412, R11...)." ; rdfs:range xsd:string .
+:name a owl:DatatypeProperty ; rdfs:subPropertyOf schema:name ; rdfs:range xsd:string .
+:role a owl:DatatypeProperty ; rdfs:range xsd:string .
+:holds a owl:ObjectProperty ; rdfs:domain :Person ; rdfs:range :Badge .
+:zone a owl:DatatypeProperty ; rdfs:range xsd:string .
+:hasPhone a owl:ObjectProperty ; rdfs:domain :Person ; rdfs:range :Phone .
+:worksFor a owl:ObjectProperty ; rdfs:domain :Contractor ; rdfs:range :Company .
+:invitedBy a owl:ObjectProperty ; rdfs:domain :Guest ; rdfs:range :StaffMember .
+:satAt a owl:ObjectProperty ; rdfs:domain :Person ; rdfs:range :Table .
+:inWing a owl:ObjectProperty ; rdfs:domain :Room ; rdfs:range :Wing ; rdfs:subPropertyOf schema:containedInPlace .
+:connects a owl:ObjectProperty ; rdfs:domain :Door ; rdfs:range :Room .
+:hasReader a owl:DatatypeProperty ; rdfs:domain :Door ; rdfs:range xsd:boolean .
+:kind a owl:DatatypeProperty ; rdfs:range xsd:string .
+:at a owl:DatatypeProperty ; rdfs:domain :Event ; rdfs:range xsd:dateTime ; rdfs:subPropertyOf schema:startDate .
+:badge a owl:ObjectProperty ; rdfs:domain :Swipe ; rdfs:range :Badge .
+:door a owl:ObjectProperty ; rdfs:domain :Swipe ; rdfs:range :Door .
+:toRoom a owl:ObjectProperty ; rdfs:domain :Swipe ; rdfs:range :Room .
+:granted a owl:DatatypeProperty ; rdfs:domain :Swipe ; rdfs:range xsd:boolean .
+:caller a owl:ObjectProperty ; rdfs:domain :Call ; rdfs:range :Phone .
+:callee a owl:ObjectProperty ; rdfs:domain :Call ; rdfs:range :Phone .
+:seconds a owl:DatatypeProperty ; rdfs:domain :Call ; rdfs:range xsd:integer .
+:contactPhone a owl:ObjectProperty ; rdfs:domain :Account ; rdfs:range :Phone .
+:fromAccount a owl:ObjectProperty ; rdfs:domain :Transfer ; rdfs:range :Account .
+:toAccount a owl:ObjectProperty ; rdfs:domain :Transfer ; rdfs:range :Account .
+:amount a owl:DatatypeProperty ; rdfs:domain :Transfer ; rdfs:range xsd:integer .
+:reference a owl:DatatypeProperty ; rdfs:domain :Transfer ; rdfs:range xsd:string .

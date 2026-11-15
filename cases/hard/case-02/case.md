@@ -2,7 +2,7 @@
 
 On the night of 2026-07-14, the Verrin Museum of Art held its gala. At 23:45 a guard
 on a round found an empty frame in the Lantern Gallery (west wing):
-*Portrait of a Cartographer* by Celestine Roux (1926) was gone. A guard's round at 22:06
+*Portrait of a Cartographer* by Celestine Roux (1926) was gone. A guard's round at 22:20
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

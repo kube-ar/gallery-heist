@@ -2,7 +2,7 @@
 
 On the night of 2026-07-12, the Belvaro House Museum held its gala. At 23:45 a guard
 on a round found an empty frame in the Tapestry Hall (east wing):
-*Self-Portrait with Compass* by Oswin Tarrant (1927) was gone. A guard's round at 22:16
+*Self-Portrait with Compass* by Oswin Tarrant (1927) was gone. A guard's round at 22:09
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

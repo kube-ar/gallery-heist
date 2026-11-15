@@ -2,7 +2,7 @@
 
 On the night of 2026-05-19, the Castell Moor Gallery held its gala. At 23:45 a guard
 on a round found an empty frame in the Glass Room (west wing):
-*Winter Market at Noon* by Tomas Vierling (1882) was gone. A guard's round at 22:17
+*Winter Market at Noon* by Tomas Vierling (1882) was gone. A guard's round at 21:48
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

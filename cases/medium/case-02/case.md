@@ -2,7 +2,7 @@
 
 On the night of 2026-07-08, the Verrin Museum of Art held its gala. At 23:45 a guard
 on a round found an empty frame in the Portrait Gallery (east wing):
-*Lanterns on the Canal* by Mirela Danescu (1929) was gone. A guard's round at 22:12
+*Lanterns on the Canal* by Mirela Danescu (1929) was gone. A guard's round at 22:53
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

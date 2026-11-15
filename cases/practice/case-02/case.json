@@ -3,7 +3,7 @@
   "pack": "practice",
   "seed": 102,
   "level": "practice",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Ostrander Collection",
   "date": "2026-09-19",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Print Room",
     "wing": "west"
   },
-  "last_seen": "2026-09-19T22:36",
+  "last_seen": "2026-09-19T21:52",
   "discovered": "2026-09-19T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "west",
-        "start": "22:36",
+        "start": "21:52",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "G-546",
-        "b": "G-998"
-      },
-      {
         "a": "E-1752",
-        "b": "E-1699"
+        "b": "G-546"
       },
       {
-        "a": "E-1252",
-        "b": "C-833"
+        "a": "G-968",
+        "b": "G-992"
+      },
+      {
+        "a": "E-1433",
+        "b": "E-1752"
       }
     ]
   }

@@ -3,7 +3,7 @@
   "pack": "hard",
   "seed": 401,
   "level": "hard",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Belvaro House Museum",
   "date": "2026-09-16",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Restoration Lab",
     "wing": "east"
   },
-  "last_seen": "2026-09-16T22:43",
+  "last_seen": "2026-09-16T22:54",
   "discovered": "2026-09-16T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "east",
-        "start": "22:43",
+        "start": "22:54",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "G-669",
-        "b": "E-1503"
+        "a": "E-1714",
+        "b": "E-1835"
       },
       {
-        "a": "G-954",
-        "b": "G-191"
+        "a": "G-825",
+        "b": "G-873"
       },
       {
-        "a": "G-742",
-        "b": "G-954"
+        "a": "E-1907",
+        "b": "G-825"
       }
     ]
   }

@@ -1,15 +1,15 @@
 guest_id,name,category,phone,invited_by
-G-137,"Lombardi, Ronan",donor,+44 7700 900891,E-1762
-G-151,"Szabo, Amara",artist,+44 7700 900124,E-1905
+G-137,"Lombardi, Ronan",donor,+44 7700 900891,E-1905
+G-151,"Szabo, Amara",artist,+44 7700 900124,E-1636
 G-208,"Nakagawa, Ezra",artist,+44 7700 900084,E-1762
-G-211,"Barros, Malik",collector,+44 7700 900907,E-1905
-G-235,"Orsini, Lars",collector,+44 7700 900873,E-1781
-G-267,"Jovanović, Damian",board member,+44 7700 900747,E-1762
-G-380,"Zielinski, Kai",board member,+44 7700 900844,E-1781
-G-509,"Hollis, Zainab",donor,+44 7700 900212,E-1905
-G-639,"Dahlgren, Bram",collector,+44 7700 900804,E-1636
-G-788,"Kaminski, Yusuf",journalist,+44 7700 900375,E-1781
-G-830,"Bakshi, Jonah",donor,+44 7700 900695,E-1636
-G-848,"Castaño, Jun",journalist,+44 7700 900789,E-1781
-G-877,"Cerny, Liv",board member,+44 7700 900006,E-1636
-G-971,"Reinholt, Nico",journalist,+44 7700 900360,E-1781
+G-211,"Barros, Malik",collector,+44 7700 900907,E-1762
+G-235,"Orsini, Lars",collector,+44 7700 900873,E-1905
+G-267,"Jovanović, Damian",board member,+44 7700 900747,E-1905
+G-380,"Zielinski, Kai",board member,+44 7700 900844,E-1762
+G-509,"Hollis, Zainab",donor,+44 7700 900212,E-1636
+G-639,"Dahlgren, Bram",collector,+44 7700 900804,E-1762
+G-788,"Kaminski, Yusuf",journalist,+44 7700 900375,E-1762
+G-830,"Bakshi, Jonah",donor,+44 7700 900695,E-1781
+G-848,"Castaño, Jun",journalist,+44 7700 900789,E-1905
+G-877,"Cerny, Liv",board member,+44 7700 900006,E-1781
+G-971,"Reinholt, Nico",journalist,+44 7700 900360,E-1636

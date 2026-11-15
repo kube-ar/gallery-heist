@@ -47,10 +47,11 @@ def graph_summary(graph: Any) -> dict[str, int]:
 
 
 def who_was_in(graph: Any, wing: str, start: datetime, end: datetime) -> set[str]:
-    """Who was in a room of `wing` at any moment from `start` to `end`, by the keycard log.
+    """Who was in a room of `wing` at any moment from `start` up to (not including) `end`, by the keycard log.
 
     A badge is in the room it last swiped into (granted swipes only) until its next granted
-    swipe. Before its first swipe, the log says nothing. Return the badge holders' ids.
+    swipe. Before its first swipe, the log says nothing. A badge that leaves exactly at `start`
+    doesn't count, and neither does one that arrives exactly at `end`. Return the holders' ids.
     """
     raise NotImplementedError
 
@@ -59,7 +60,7 @@ def connection(graph: Any, a: str, b: str) -> list[str]:
     """A shortest chain of people from `a` to `b`, both ends included: [a, ..., b].
 
     Two people are directly linked when they called each other, sent each other money, sat
-    at the same dinner table, one invited the other, or they work for the same contractor.
+    at the same dinner table, one invited the other, or they work for the same company.
     A phone belongs to whoever lists it; an account to whoever owns its contact phone.
     """
     raise NotImplementedError

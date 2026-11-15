@@ -9,3 +9,4 @@ dist/
 cases/mine/
 # backups made by `heist use-reference`
 *.mine.py
+*.mine.ttl

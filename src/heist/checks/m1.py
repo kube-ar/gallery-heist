@@ -6,7 +6,7 @@ from types import ModuleType
 
 from .. import answers
 from ..case import Case, list_cases, load_case
-from .core import NotStarted, Result, attempt
+from .core import NotStarted, Result, attempt, tally
 
 PACKS = ("practice", "easy", "medium", "hard")
 KS = (5, 10, 25, 50, 100)
@@ -76,7 +76,7 @@ def run(module: ModuleType) -> list[Result]:
             summary.fail(f"{case.id}: " + ", ".join(wrong))
         else:
             ok += 1
-    summary.score = f"{ok}/{len(all_cases)} cases"
+    tally(summary, ok, len(all_cases), "cases")
 
     # 2. Who was in the wing, by the keycard log.
     total = right = 0
@@ -98,14 +98,14 @@ def run(module: ModuleType) -> list[Result]:
                 missing = ", ".join(p.label(x) for x in sorted(want - got))
                 extra = ", ".join(p.label(x) for x in sorted(got - want))
                 wing.fail(
-                    f"{case.id} · {what}: "
+                    f"{case.id} · {what} (end not included): "
                     + "; ".join(
                         x for x in [f"missing {missing}" if missing else "", f"extra {extra}" if extra else ""] if x
                     )
                 )
     except NotStarted:
         pass
-    wing.score = f"{right}/{total} questions"
+    tally(wing, right, total, "questions")
 
     # 3. Shortest connection: a real path, as short as any.
     total = right = 0
@@ -121,22 +121,24 @@ def run(module: ModuleType) -> list[Result]:
                 if path is None:
                     continue
                 parties = [p.party(k) for k in path]
+                parties = [x for i, x in enumerate(parties) if i == 0 or x != parties[i - 1]]
                 if None in parties:
-                    conn.fail(f"{case.id} · {what}: {path[parties.index(None)]!r} isn't an id of anyone in this case")
+                    bad = next(k for k in path if p.party(k) is None)
+                    conn.fail(f"{case.id} · {what}: {bad!r} isn't an id of anyone in this case")
                     continue
                 best = answers.shortest_hops(case, q["a"], q["b"], adj)
                 broken = next((i for i in range(len(parties) - 1) if parties[i + 1] not in adj[parties[i]]), None)
                 if not parties or parties[0] != p.party(q["a"]) or parties[-1] != p.party(q["b"]):
                     conn.fail(f"{case.id} · {what}: the path should start at {q['a']} and end at {q['b']}")
                 elif broken is not None:
-                    conn.fail(f"{case.id} · {what}: {path[broken]} and {path[broken + 1]} aren't directly linked")
+                    conn.fail(f"{case.id} · {what}: {parties[broken]} and {parties[broken + 1]} aren't directly linked")
                 elif len(parties) - 1 != best:
                     conn.fail(f"{case.id} · {what}: {len(parties) - 1} links, but {best} is enough")
                 else:
                     right += 1
     except NotStarted:
         pass
-    conn.score = f"{right}/{total} pairs"
+    tally(conn, right, total, "pairs")
 
     # 4. Money loops.
     right = 0
@@ -150,8 +152,8 @@ def run(module: ModuleType) -> list[Result]:
             if got == want:
                 right += 1
                 continue
-            missing = [" → ".join(x) for x in sorted(want - got)]
-            extra = [" → ".join(x) for x in sorted(got - want)]
+            missing = [" → ".join((*x, x[0])) for x in sorted(want - got)]
+            extra = [" → ".join((*x, x[0])) for x in sorted(got - want)]
             loops.fail(
                 f"{case.id}: "
                 + "; ".join(
@@ -160,7 +162,7 @@ def run(module: ModuleType) -> list[Result]:
             )
     except NotStarted:
         pass
-    loops.score = f"{right}/{len(all_cases)} cases"
+    tally(loops, right, len(all_cases), "cases")
 
     # 5. Vector search over the same logs, for comparison. It passes when it runs:
     #    the point is the table, not a score.
@@ -184,6 +186,8 @@ def run(module: ModuleType) -> list[Result]:
                 exact |= got == want
                 line.append(f"{precision:.2f}/{recall:.2f}")
             rows.append((case.id, line))
+        if not rows or any(len(line) < len(KS) for _, line in rows):
+            vector.passed = False
         if vector.passed:
             vector.score = "ran on the practice pack"
             vector.notes.append("precision/recall at k = " + ", ".join(str(k) for k in KS))

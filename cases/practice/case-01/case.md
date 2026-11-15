@@ -2,7 +2,7 @@
 
 On the night of 2026-09-08, the Verrin Museum of Art held its gala. At 23:45 a guard
 on a round found an empty frame in the Print Room (west wing):
-*The Blue Staircase* by Ada Kestrel (1869) was gone. A guard's round at 22:49
+*The Blue Staircase* by Ada Kestrel (1869) was gone. A guard's round at 21:31
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

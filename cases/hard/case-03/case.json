@@ -3,7 +3,7 @@
   "pack": "hard",
   "seed": 403,
   "level": "hard",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Ostrander Collection",
   "date": "2026-05-09",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Restoration Lab",
     "wing": "east"
   },
-  "last_seen": "2026-05-09T22:17",
+  "last_seen": "2026-05-09T22:41",
   "discovered": "2026-05-09T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "east",
-        "start": "22:17",
+        "start": "22:41",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "E-1987",
-        "b": "E-1148"
+        "a": "E-1148",
+        "b": "G-410"
       },
       {
-        "a": "E-1492",
-        "b": "G-984"
+        "a": "G-128",
+        "b": "G-829"
       },
       {
-        "a": "E-1662",
-        "b": "C-247"
+        "a": "G-378",
+        "b": "G-439"
       }
     ]
   }

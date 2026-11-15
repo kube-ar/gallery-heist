@@ -3,7 +3,7 @@
   "pack": "final",
   "seed": 901,
   "level": "final",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Belvaro House Museum",
   "date": "2026-06-26",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Glass Room",
     "wing": "west"
   },
-  "last_seen": "2026-06-26T22:17",
+  "last_seen": "2026-06-26T22:37",
   "discovered": "2026-06-26T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "west",
-        "start": "22:17",
+        "start": "22:37",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "G-550",
-        "b": "C-519"
+        "a": "C-519",
+        "b": "C-585"
       },
       {
-        "a": "E-1778",
-        "b": "E-1867"
+        "a": "G-769",
+        "b": "G-778"
       },
       {
-        "a": "G-662",
-        "b": "E-1778"
+        "a": "E-1119",
+        "b": "E-1477"
       }
     ]
   }

@@ -64,18 +64,28 @@ def cmd_check(args) -> None:
 
 def cmd_use_reference(args) -> None:
     m = _milestone(args.milestone)
-    mine, backup, ref = ROOT / m.file, ROOT / m.file.replace(".py", ".mine.py"), ROOT / m.reference
+    mine_dir, ref_dir = (ROOT / m.file).parent, (ROOT / m.reference).parent
+    pairs = [(ROOT / m.file, ROOT / m.reference)] + [(mine_dir / f, ref_dir / f) for f in m.extra]
+
+    def backup(path: Path) -> Path:
+        return path.with_name(path.stem + ".mine" + path.suffix)
+
     if args.undo:
-        if not backup.exists():
-            sys.exit(f"No backup at {backup.relative_to(ROOT)}")
-        shutil.move(backup, mine)
-        print(f"Restored your {m.file}")
+        if not backup(pairs[0][0]).exists():
+            sys.exit(f"No backup at {backup(pairs[0][0]).relative_to(ROOT)}")
+        for mine, _ in pairs:
+            if backup(mine).exists():
+                shutil.move(backup(mine), mine)
+        print(f"Restored your files for milestone {m.id}")
         return
-    if backup.exists():
-        sys.exit(f"{backup.relative_to(ROOT)} already exists: run with --undo first, or remove it")
-    shutil.copy(mine, backup)
-    shutil.copy(ref, mine)
-    print(f"Your code is in {backup.relative_to(ROOT)}; {m.file} is now the reference solution.")
+    if backup(pairs[0][0]).exists():
+        sys.exit(f"{backup(pairs[0][0]).relative_to(ROOT)} already exists: run with --undo first, or remove it")
+    for mine, ref in pairs:
+        if mine.exists():
+            shutil.copy(mine, backup(mine))
+        shutil.copy(ref, mine)
+    names = ", ".join(str(p.relative_to(ROOT)) for p, _ in pairs)
+    print(f"Replaced {names} with the reference; yours are kept as *.mine.* (--undo puts them back).")
 
 
 def cmd_generate(args) -> None:
@@ -87,6 +97,9 @@ def cmd_generate(args) -> None:
         for folder in build_pack(args.pack):
             print(f"wrote {folder.relative_to(ROOT)}")
         return
+    _, methods, first_seed, hidden = PACKS["final"]
+    if first_seed <= args.seed < first_seed + len(methods):
+        sys.exit("Those seeds build the final pack, whose answers are hidden on purpose. Pick another seed.")
     folder = Path(args.out) if args.out else CASES / "mine" / f"case-{args.seed}"
     build_case(args.seed, args.level, folder, folder.name, folder.parent.name, method=args.method)
     name = folder.relative_to(CASES).as_posix() if folder.is_relative_to(CASES) else str(folder)

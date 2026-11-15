@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from . import names
 from .venue import OUTSIDE, Venue, build_venue
 
-GENERATOR_VERSION = 1
+GENERATOR_VERSION = 2
 
 ATRIUM, DINING, TERRACE, KITCHEN, SERVICE = "R03", "R04", "R05", "R31", "R30"
 LOADING, VAULT, SECURITY, STAFF_ROOM, OFFICES = "R32", "R33", "R34", "R35", "R36"
@@ -305,7 +305,7 @@ def _simulate(seed: int, level_name: str, attempt: int, method: str | None) -> W
     _cast(world, level, r_people)
     crime = _plot(world, level, plot_method, r_plot)
     world.crime = crime
-    _night(world, level, r_night)
+    _night(world, level, r_night, tag)
     _money(world, level, r_money)
     _calls(world, r_calls)
     world.stays.sort(key=lambda s: (s.start, s.person))
@@ -449,7 +449,7 @@ def _plot(world: World, level: Level, method: str, rng: random.Random) -> Crime:
 # ── The night ─────────────────────────────────────────────────────────────────
 
 
-def _night(world: World, level: Level, rng: random.Random) -> None:
+def _night(world: World, level: Level, rng: random.Random, tag: str) -> None:
     crime = world.crime
     assert crime is not None
     people = world.people
@@ -461,12 +461,19 @@ def _night(world: World, level: Level, rng: random.Random) -> None:
         world.camera_events.append(CameraEvent(1050, cam, "online", "start"))
 
     # 1. Guards who aren't in on it walk their rounds; one of them finds the empty frame.
+    #    They walk twice: once to find a quiet moment for the theft, then again from the same
+    #    random stream, skipping the room after the theft so the finder is the first to see it.
     guards = [g for g in _by_role(world, "guard") if g.id != crime.accomplice]
     finder = rng.choice(guards)
     crime.discovered_by = finder.id
-    for g in guards:
-        _guard(world, g, rng, discover=(g is finder))
-    _head_of_security(world, _by_role(world, "head_of_security")[0], rng)
+    mark = (len(world.stays), len(world.swipes))
+
+    def walk_guards(skip_after: int | None) -> None:
+        rounds_rng = _rng(tag, "guards")
+        for g in guards:
+            _guard(world, g, rounds_rng, discover=(g is finder), skip_after=skip_after)
+
+    walk_guards(None)
 
     # 2. Pick the theft window: nobody in the room, and a guard saw the painting earlier.
     visits = [s for s in world.stays if s.room == crime.room]
@@ -483,6 +490,9 @@ def _night(world: World, level: Level, rng: random.Random) -> None:
         raise _Retry
     crime.start, crime.last_seen = rng.choice(options)
     crime.end = crime.start + duration
+    del world.stays[mark[0] :], world.swipes[mark[1] :]
+    walk_guards(crime.start)
+    _head_of_security(world, _by_role(world, "head_of_security")[0], rng)
 
     # 3. The ring.
     _accomplice(world, people[crime.accomplice], rng)
@@ -545,7 +555,7 @@ def _mingle(
         w.wait(min(end, w.t + rng.randint(8, 22)))
 
 
-def _guard(world: World, g: Person, rng: random.Random, discover: bool) -> None:
+def _guard(world: World, g: Person, rng: random.Random, discover: bool, skip_after: int | None = None) -> None:
     w = Walker(world, g, OUTSIDE, 1040)
     _arrive_staff(w, rng, 1040, 1065)
     w.go(SECURITY)
@@ -553,9 +563,12 @@ def _guard(world: World, g: Person, rng: random.Random, discover: bool) -> None:
     rounds = [EAST_GALLERIES + [LAB], WEST_GALLERIES + ["R23"]]
     turn = rng.randint(0, 1)
     last = 1405 if discover else 1440
+    target = world.crime.room if world.crime else None
     while t < last - 35:
         w.wait(t)
         for room in rounds[turn % 2]:
+            if skip_after is not None and w.t >= skip_after and room == target:
+                continue  # after the theft, only the finder walks into that room
             w.go(room)
             w.wait(w.t + rng.randint(2, 4))
         w.go(SECURITY)
@@ -619,6 +632,8 @@ def _accomplice(world: World, a: Person, rng: random.Random) -> None:
     while t < 1440:
         w.wait(t)
         for room in rounds[turn % 2]:
+            if room == c.room:
+                continue  # stays away from the empty frame and lets someone else find it
             w.go(room)
             w.wait(w.t + rng.randint(2, 4))
         w.go(SECURITY)
@@ -894,6 +909,8 @@ def _calls(world: World, rng: random.Random) -> None:
         world.calls.append(Call(t, ph[a], ph[b], rng.randint(lo, hi)))
 
     for rel in world.relationships:
+        if rel.kind == "friend" and rng.random() < 0.5:
+            continue  # some friends settle up by bank transfer and never call
         if rel.kind in ("sibling", "spouse", "friend", "flatmate"):
             for _ in range(rng.randint(1, 3)):
                 a, b = (rel.a, rel.b) if rng.random() < 0.5 else (rel.b, rel.a)
@@ -901,9 +918,10 @@ def _calls(world: World, rng: random.Random) -> None:
     relatives = _by_role(world, "relative")
     guests = sorted(x.id for x in p.values() if x.kind == "guest")
     for rel in relatives:
-        g = rng.choice(guests)
-        world.relationships.append(Relationship(g, rel.id, "relative", "family at home"))
-        call(g, rel.id, rng.randint(1250, 1400), 30, 240)  # calls home during the gala
+        # Someone outside the museum two guests both call: a shared relative, a babysitter.
+        for g in rng.sample(guests, 2):
+            world.relationships.append(Relationship(g, rel.id, "relative", "family at home"))
+            call(g, rel.id, rng.randint(1250, 1400), 30, 240)
     for rel in world.relationships:
         if rel.kind == "lender":
             call(rel.b, rel.a, -rng.randint(2, 8) * DAY + rng.randint(600, 1100), 60, 300)

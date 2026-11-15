@@ -3,7 +3,7 @@
   "pack": "practice",
   "seed": 101,
   "level": "practice",
-  "generator_version": 1,
+  "generator_version": 2,
   "venue": "the Verrin Museum of Art",
   "date": "2026-09-08",
   "artwork": {
@@ -16,13 +16,13 @@
     "name": "Print Room",
     "wing": "west"
   },
-  "last_seen": "2026-09-08T22:49",
+  "last_seen": "2026-09-08T21:31",
   "discovered": "2026-09-08T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "west",
-        "start": "22:49",
+        "start": "21:31",
         "end": "23:45"
       },
       {
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
+        "a": "E-1498",
+        "b": "G-116"
+      },
+      {
         "a": "E-1552",
-        "b": "G-201"
+        "b": "E-1855"
       },
       {
-        "a": "E-1855",
-        "b": "G-209"
-      },
-      {
-        "a": "G-116",
-        "b": "E-1661"
+        "a": "E-1342",
+        "b": "E-1351"
       }
     ]
   }

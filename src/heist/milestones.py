@@ -15,7 +15,8 @@ class Milestone:
     title: str
     module: str  # your code
     reference: str  # the reference solution, relative to the repo root
-    checks: str  # the module with `run(module, lang)`
+    checks: str  # the module with `run(module)`
+    extra: tuple[str, ...] = ()  # files next to your module that the reference also replaces
 
     @property
     def file(self) -> str:
@@ -37,6 +38,16 @@ MILESTONES = {
             module="heist.graphrag.m1_timeline_board",
             reference="reference/graphrag/m1_timeline_board.py",
             checks="heist.checks.m1",
+        ),
+        Milestone(
+            id="2",
+            course="graphrag",
+            slug="case-ontology",
+            title="The case ontology",
+            module="heist.graphrag.m2_case_ontology",
+            reference="reference/graphrag/m2_case_ontology.py",
+            checks="heist.checks.m2",
+            extra=("m2_heist.ttl", "m2_shapes.ttl"),
         ),
     ]
 }

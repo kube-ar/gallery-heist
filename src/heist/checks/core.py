@@ -35,7 +35,7 @@ class Result:
 def attempt(result: Result, fn: Callable, *args):
     """Call your function. NotImplementedError marks the check as not started."""
     try:
-        return fn(*args)
+        value = fn(*args)
     except NotImplementedError as e:
         result.started = False
         result.passed = False
@@ -46,6 +46,16 @@ def attempt(result: Result, fn: Callable, *args):
         result.details.append(f"{getattr(fn, '__name__', 'your code')} raised: {tb[-1]}")
         result.details.extend("    " + line for line in tb[-5:-1])
         return None
+    if value is None:
+        result.fail(f"{getattr(fn, '__name__', 'your function')} returned None: did it forget a return?")
+    return value
+
+
+def tally(result: Result, right: int, total: int, unit: str) -> None:
+    """Score line, and a check passes only when every answer is right."""
+    result.score = f"{right}/{total} {unit}"
+    if right < total:
+        result.passed = False
 
 
 def _color(code: str, text: str) -> str:

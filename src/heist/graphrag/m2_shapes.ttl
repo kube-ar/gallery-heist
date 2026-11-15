@@ -1,0 +1,13 @@
+# Your SHACL shapes. Milestone 2: https://kube.ar/graphrag/project/gallery-heist/case-ontology
+#
+# The graph is open-world: a missing fact is just unknown. Shapes are the closed-world check you
+# run where a missing or wrong fact must stop you. The checks feed your to_rdf() four broken
+# cases; your shapes must reject each one and accept the clean case. One shape to start:
+
+@prefix :   <https://kube.ar/heist/ontology#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+:TransferShape a sh:NodeShape ;
+    sh:targetClass :Transfer ;
+    sh:property [ sh:path :amount ; sh:minCount 1 ; sh:minExclusive 0 ;
+                  sh:message "A transfer moves a positive amount." ] .
