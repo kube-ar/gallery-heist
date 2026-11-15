@@ -1,0 +1,14 @@
+# Neo4j for milestone 4 on: `docker compose up -d`, then open http://localhost:7474
+# (user neo4j, password from NEO4J_PASSWORD below or in .env).
+services:
+  neo4j:
+    image: neo4j:5
+    ports:
+      - "7474:7474" # the browser
+      - "7687:7687" # bolt, what the code connects to
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-heist-password}
+    volumes:
+      - neo4j-data:/data
+volumes:
+  neo4j-data:

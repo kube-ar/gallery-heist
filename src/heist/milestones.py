@@ -58,6 +58,15 @@ MILESTONES = {
             reference="reference/graphrag/m3_reading_statements.py",
             checks="heist.checks.m3",
         ),
+        Milestone(
+            id="4",
+            course="graphrag",
+            slug="ask-the-board",
+            title="Ask the board",
+            module="heist.graphrag.m4_ask_the_board",
+            reference="reference/graphrag/m4_ask_the_board.py",
+            checks="heist.checks.m4",
+        ),
     ]
 }
 

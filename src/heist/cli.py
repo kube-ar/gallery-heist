@@ -51,6 +51,7 @@ def cmd_check(args) -> None:
         spec = importlib.util.spec_from_file_location(f"reference_{m.id}", path)
         assert spec and spec.loader
         module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module  # dataclasses in the module look themselves up here
         spec.loader.exec_module(module)
     else:
         module = importlib.import_module(m.module)
