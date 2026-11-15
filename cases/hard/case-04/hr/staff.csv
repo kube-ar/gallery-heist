@@ -1,0 +1,15 @@
+employee_id,full_name,role,department,phone,hired
+E-1079,Elif Abara,Director,Directorate,+44 7700 900757,2014-08-21
+E-1092,Caio Ramires,Security Guard,Security,+44 7700 900596,2016-02-15
+E-1138,Noor Arvidsson,Security Guard,Security,+44 7700 900704,2023-10-27
+E-1203,Alba Kessler,Events Manager,Operations,+44 7700 900742,2014-08-18
+E-1216,Lars Aldana,Curator,Collections,+44 7700 900200,2023-01-24
+E-1270,Aiko Lombardi,Facilities Technician,Operations,+44 7700 900858,2021-04-02
+E-1277,Dev Sato,Head of Security,Security,+44 7700 900396,2014-03-16
+E-1522,Nico Calloway,Education Officer,Learning,+44 7700 900215,2022-11-05
+E-1571,Gideon Hayashi,Registrar,Collections,+44 7700 900530,2016-06-14
+E-1679,Jun Holt,Security Guard,Security,+44 7700 900659,2023-07-29
+E-1791,Ximena Vos,Security Guard,Security,+44 7700 900384,2019-03-26
+E-1798,Selim Marchetti,Security Guard,Security,+44 7700 900587,2023-04-30
+E-1914,Farah Castellano,Conservator,Collections,+44 7700 900134,2024-03-31
+E-1956,Emeka Barros,Curator,Collections,+44 7700 900845,2013-07-28

@@ -1,0 +1,15 @@
+employee_id,full_name,role,department,phone,hired
+E-1033,Naveen Fitzwilliam,Security Guard,Security,+44 7700 900125,2022-04-13
+E-1065,Elio Pellegrini,Security Guard,Security,+44 7700 900657,2025-05-23
+E-1150,Tobias Okafor,Education Officer,Learning,+44 7700 900505,2022-02-09
+E-1233,Caio Greaves,Security Guard,Security,+44 7700 900855,2019-06-28
+E-1242,Anders Olander,Events Manager,Operations,+44 7700 900885,2015-03-25
+E-1419,Camille Strand,Director,Directorate,+44 7700 900321,2017-03-05
+E-1514,Nadia Zeller,Security Guard,Security,+44 7700 900999,2015-01-13
+E-1556,Omar Mbeki,Head of Security,Security,+44 7700 900360,2019-06-18
+E-1632,Sigrid Jovanović,Registrar,Collections,+44 7700 900180,2024-05-15
+E-1685,Saoirse Balogun,Curator,Collections,+44 7700 900610,2012-11-09
+E-1845,Lucía Karimi,Curator,Collections,+44 7700 900978,2018-06-13
+E-1922,Lionel Velasco,Facilities Technician,Operations,+44 7700 900583,2025-01-09
+E-1943,Inés Jessop,Security Guard,Security,+44 7700 900963,2014-08-15
+E-1964,Dalia Garrido,Conservator,Collections,+44 7700 900653,2013-01-09

@@ -1,0 +1,54 @@
+{
+  "id": "case-02",
+  "pack": "hard",
+  "seed": 402,
+  "level": "hard",
+  "generator_version": 1,
+  "venue": "the Verrin Museum of Art",
+  "date": "2026-07-14",
+  "artwork": {
+    "title": "Portrait of a Cartographer",
+    "artist": "Celestine Roux",
+    "year": 1926
+  },
+  "room": {
+    "id": "R22",
+    "name": "Lantern Gallery",
+    "wing": "west"
+  },
+  "last_seen": "2026-07-14T22:06",
+  "discovered": "2026-07-14T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "west",
+        "start": "22:06",
+        "end": "23:45"
+      },
+      {
+        "wing": "east",
+        "start": "20:00",
+        "end": "20:30"
+      },
+      {
+        "wing": "service",
+        "start": "22:30",
+        "end": "23:00"
+      }
+    ],
+    "connection": [
+      {
+        "a": "C-746",
+        "b": "G-533"
+      },
+      {
+        "a": "E-1065",
+        "b": "G-551"
+      },
+      {
+        "a": "C-746",
+        "b": "E-1150"
+      }
+    ]
+  }
+}

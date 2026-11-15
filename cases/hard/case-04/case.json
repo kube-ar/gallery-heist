@@ -1,0 +1,54 @@
+{
+  "id": "case-04",
+  "pack": "hard",
+  "seed": 404,
+  "level": "hard",
+  "generator_version": 1,
+  "venue": "the Harwell Lane Gallery",
+  "date": "2026-11-20",
+  "artwork": {
+    "title": "Self-Portrait with Compass",
+    "artist": "Oswin Tarrant",
+    "year": 1886
+  },
+  "room": {
+    "id": "R21",
+    "name": "Lantern Gallery",
+    "wing": "west"
+  },
+  "last_seen": "2026-11-20T22:45",
+  "discovered": "2026-11-20T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "west",
+        "start": "22:45",
+        "end": "23:45"
+      },
+      {
+        "wing": "east",
+        "start": "21:00",
+        "end": "21:30"
+      },
+      {
+        "wing": "service",
+        "start": "22:30",
+        "end": "23:00"
+      }
+    ],
+    "connection": [
+      {
+        "a": "E-1679",
+        "b": "G-963"
+      },
+      {
+        "a": "E-1522",
+        "b": "E-1203"
+      },
+      {
+        "a": "G-990",
+        "b": "G-516"
+      }
+    ]
+  }
+}

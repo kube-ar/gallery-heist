@@ -1,0 +1,54 @@
+{
+  "id": "case-01",
+  "pack": "easy",
+  "seed": 201,
+  "level": "easy",
+  "generator_version": 1,
+  "venue": "the Belvaro House Museum",
+  "date": "2026-04-09",
+  "artwork": {
+    "title": "A Quiet Street in Delft Light",
+    "artist": "Elsa Marrow",
+    "year": 1871
+  },
+  "room": {
+    "id": "R11",
+    "name": "Portrait Gallery",
+    "wing": "east"
+  },
+  "last_seen": "2026-04-09T22:11",
+  "discovered": "2026-04-09T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "east",
+        "start": "22:11",
+        "end": "23:45"
+      },
+      {
+        "wing": "west",
+        "start": "20:00",
+        "end": "20:30"
+      },
+      {
+        "wing": "service",
+        "start": "21:00",
+        "end": "21:30"
+      }
+    ],
+    "connection": [
+      {
+        "a": "E-1607",
+        "b": "G-680"
+      },
+      {
+        "a": "G-469",
+        "b": "E-1774"
+      },
+      {
+        "a": "E-1899",
+        "b": "G-304"
+      }
+    ]
+  }
+}

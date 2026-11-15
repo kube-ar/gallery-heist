@@ -1,0 +1,36 @@
+[project]
+name = "gallery-heist"
+version = "0.1.0"
+description = "A painting vanished during a museum gala. Build a knowledge graph, then an agent, that finds out who took it."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "model2vec>=0.6",
+    "networkx>=3.3",
+    "numpy>=1.26",
+]
+
+[project.scripts]
+heist = "heist.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.8"]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/heist"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B905"]  # zip() over a list and its own tail is fine
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

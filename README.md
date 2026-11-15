@@ -1,0 +1,84 @@
+# Gallery Heist
+
+A painting vanished during a museum gala. Every system in the building recorded part of the
+night: the keycard readers, the cameras, the phone company, the bank, the events team. None of
+them knows who did it, because none of them can see the others.
+
+In this project you connect them. First as a **knowledge graph** that answers questions no single
+system can (the [Knowledge Graphs & GraphRAG](https://kube.ar/graphrag) course). Later as an
+**agent** that investigates a case on its own and names the thief, with evidence (the
+[Agentic GraphRAG](https://kube.ar/agentic-graphrag) course).
+
+Every case is generated from a seed by a simulation of the whole night, so the truth is always
+known. That's what lets the checks score your work exactly.
+
+## Milestones
+
+Each milestone closes a chapter of a course on [kube.ar](https://kube.ar). The instructions live
+on the site, next to the lessons they use. This repo holds the code, the cases and the checks.
+
+| # | Milestone | Course chapter | Status |
+|---|---|---|---|
+| 1 | [The timeline board](https://kube.ar/graphrag/project/gallery-heist/timeline-board): seven systems in one graph | GraphRAG · Why a graph | ready |
+| 2 | The case ontology | GraphRAG · Designing the graph | coming |
+| 3 | Reading the statements | GraphRAG · Building the graph | coming |
+| 4 | Ask the board | GraphRAG · Storing and querying | coming |
+| 5 | Solve rate | GraphRAG · Measuring quality | coming |
+
+The detective agent (Agentic GraphRAG) follows once the board is complete.
+
+## Setup
+
+1. Click **Use this template** on GitHub to get your own copy, and clone it.
+2. Install [uv](https://docs.astral.sh/uv/), then:
+
+```sh
+uv sync
+uv run heist cases                  # the case packs
+uv run heist show practice/case-01  # a case's briefing
+```
+
+Python 3.12 or newer. Milestone 1 needs no API key and no database.
+
+## How a milestone works
+
+1. Finish the chapter on the site and open its milestone page.
+2. Write your code in the milestone's file, for example `src/heist/graphrag/m1_timeline_board.py`.
+   The docstrings say exactly what each function must return.
+3. Run the checks:
+
+```sh
+uv run heist check 1             # links to the lessons in English
+uv run heist check 1 --lang es   # ...or in Spanish
+```
+
+Each check says what's right, what isn't, and which lesson explains it.
+
+**Fast or deep.** Every milestone can be built two ways. The fast path uses a library
+(networkx, a vector index, later Neo4j) and gets you to a working result in a few hours. The deep
+path writes the same piece yourself. The checks are the same either way, so pick per milestone,
+and come back to go deeper whenever you're curious.
+
+**Stuck, or skipping ahead?** `uv run heist check 1 --reference` shows what passing looks like.
+`uv run heist use-reference 1` swaps your file for the reference solution (yours is kept as
+`.mine.py`; `--undo` puts it back), so the next milestone has something to build on.
+
+## The cases
+
+| Pack | Cases | What changes |
+|---|---|---|
+| `practice` | 3 | Small cast; the thief works inside the museum |
+| `easy` | 4 | A few more people, the same kind of theft |
+| `medium` | 4 | A bigger cast; in some cases a borrowed badge makes the keycard log name the wrong person |
+| `hard` | 4 | A fire door that logs nothing, and money that goes around in loops |
+| `final` | 3 | All of it. The answers are hashed, so you can't read them by accident |
+
+Each case folder holds one export per system (`hr/`, `events/`, `vendors/`, `security/`,
+`facilities/`, `telecom/`, `finance/`), a briefing (`case.md`) and `case.json` with the questions
+the checks ask. `truth.json` is what really happened: the checks read it, you shouldn't.
+
+Want more? `uv run heist generate --seed 7 --level hard` builds a new case in `cases/mine/`.
+
+## License
+
+Code: MIT. Case packs: CC BY 4.0. All people, places, companies and artworks are fictional.

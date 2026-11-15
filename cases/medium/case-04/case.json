@@ -1,0 +1,54 @@
+{
+  "id": "case-04",
+  "pack": "medium",
+  "seed": 304,
+  "level": "medium",
+  "generator_version": 1,
+  "venue": "the Ostrander Collection",
+  "date": "2026-04-07",
+  "artwork": {
+    "title": "A Quiet Street in Delft Light",
+    "artist": "Elsa Marrow",
+    "year": 1930
+  },
+  "room": {
+    "id": "R11",
+    "name": "Miniatures Room",
+    "wing": "east"
+  },
+  "last_seen": "2026-04-07T22:02",
+  "discovered": "2026-04-07T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "east",
+        "start": "22:02",
+        "end": "23:45"
+      },
+      {
+        "wing": "west",
+        "start": "20:00",
+        "end": "20:30"
+      },
+      {
+        "wing": "service",
+        "start": "22:00",
+        "end": "22:30"
+      }
+    ],
+    "connection": [
+      {
+        "a": "G-798",
+        "b": "G-573"
+      },
+      {
+        "a": "E-1828",
+        "b": "E-1907"
+      },
+      {
+        "a": "E-1216",
+        "b": "C-323"
+      }
+    ]
+  }
+}

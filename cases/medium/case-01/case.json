@@ -1,0 +1,54 @@
+{
+  "id": "case-01",
+  "pack": "medium",
+  "seed": 301,
+  "level": "medium",
+  "generator_version": 1,
+  "venue": "the Belvaro House Museum",
+  "date": "2026-07-12",
+  "artwork": {
+    "title": "Self-Portrait with Compass",
+    "artist": "Oswin Tarrant",
+    "year": 1927
+  },
+  "room": {
+    "id": "R12",
+    "name": "Tapestry Hall",
+    "wing": "east"
+  },
+  "last_seen": "2026-07-12T22:16",
+  "discovered": "2026-07-12T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "east",
+        "start": "22:16",
+        "end": "23:45"
+      },
+      {
+        "wing": "west",
+        "start": "20:00",
+        "end": "20:30"
+      },
+      {
+        "wing": "service",
+        "start": "20:30",
+        "end": "21:00"
+      }
+    ],
+    "connection": [
+      {
+        "a": "G-522",
+        "b": "G-580"
+      },
+      {
+        "a": "G-483",
+        "b": "E-1871"
+      },
+      {
+        "a": "G-726",
+        "b": "G-874"
+      }
+    ]
+  }
+}

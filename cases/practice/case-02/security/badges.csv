@@ -1,0 +1,16 @@
+badge_id,holder_type,holder_id,zones
+B-0151,staff,E-1252,east;offices;security;service;vault;west
+B-0261,staff,E-1600,east;offices;security;service;vault;west
+B-0271,staff,E-1151,offices;service
+B-0384,contractor,C-775,service
+B-0410,staff,E-1247,east;offices;service
+B-0425,contractor,C-833,service
+B-0449,staff,E-1433,east;offices;service;vault;west
+B-0545,staff,E-1263,east;offices;security;service;vault;west
+B-0619,contractor,C-236,service
+B-0628,contractor,C-857,service
+B-0694,staff,E-1952,east;offices;service;west
+B-0773,staff,E-1114,east;offices;service;west
+B-0924,staff,E-1699,east;offices;service;west
+B-0941,staff,E-1752,offices;security;service
+B-0991,staff,E-1526,east;offices;security;service;vault;west

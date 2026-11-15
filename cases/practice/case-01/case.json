@@ -1,0 +1,54 @@
+{
+  "id": "case-01",
+  "pack": "practice",
+  "seed": 101,
+  "level": "practice",
+  "generator_version": 1,
+  "venue": "the Verrin Museum of Art",
+  "date": "2026-09-08",
+  "artwork": {
+    "title": "The Blue Staircase",
+    "artist": "Ada Kestrel",
+    "year": 1869
+  },
+  "room": {
+    "id": "R21",
+    "name": "Print Room",
+    "wing": "west"
+  },
+  "last_seen": "2026-09-08T22:49",
+  "discovered": "2026-09-08T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "west",
+        "start": "22:49",
+        "end": "23:45"
+      },
+      {
+        "wing": "east",
+        "start": "20:00",
+        "end": "20:30"
+      },
+      {
+        "wing": "service",
+        "start": "20:30",
+        "end": "21:00"
+      }
+    ],
+    "connection": [
+      {
+        "a": "E-1552",
+        "b": "G-201"
+      },
+      {
+        "a": "E-1855",
+        "b": "G-209"
+      },
+      {
+        "a": "G-116",
+        "b": "E-1661"
+      }
+    ]
+  }
+}

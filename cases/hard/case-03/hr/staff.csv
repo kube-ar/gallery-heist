@@ -1,0 +1,15 @@
+employee_id,full_name,role,department,phone,hired
+E-1148,Noor Brennan,Security Guard,Security,+44 7700 900630,2024-08-01
+E-1222,Uma Halloran,Head of Security,Security,+44 7700 900422,2015-09-03
+E-1317,Zofia Lindgren,Education Officer,Learning,+44 7700 900207,2022-10-16
+E-1427,Ximena Elmquist,Security Guard,Security,+44 7700 900313,2024-09-11
+E-1492,Maelle Falkner,Registrar,Collections,+44 7700 900506,2023-11-08
+E-1662,Nadia Yoshida,Conservator,Collections,+44 7700 900554,2024-11-16
+E-1750,Omar Jessop,Security Guard,Security,+44 7700 900759,2024-10-06
+E-1752,Pavel Ulloa,Security Guard,Security,+44 7700 900216,2024-11-24
+E-1781,Cyrus Nygaard,Director,Directorate,+44 7700 900891,2020-08-03
+E-1805,Jun Hollis,Curator,Collections,+44 7700 900702,2020-10-21
+E-1827,Matteo Bakshi,Curator,Collections,+44 7700 900810,2013-09-02
+E-1873,Ezra Szabo,Events Manager,Operations,+44 7700 900398,2022-06-27
+E-1933,Edda Brandt,Security Guard,Security,+44 7700 900758,2021-07-24
+E-1987,Mei Ulloa,Facilities Technician,Operations,+44 7700 900839,2023-04-24
