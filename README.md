@@ -22,7 +22,7 @@ on the site, next to the lessons they use. This repo holds the code, the cases a
 | 1 | [The timeline board](https://kube.ar/graphrag/project/gallery-heist/timeline-board): seven systems in one graph | GraphRAG · Why a graph | ready |
 | 2 | [The case ontology](https://kube.ar/graphrag/project/gallery-heist/case-ontology): RDF, shapes, open-world alibis, the sign-in sheet | GraphRAG · Designing the graph | ready |
 | 3 | [Reading the statements](https://kube.ar/graphrag/project/gallery-heist/reading-the-statements): a lexical graph, linked mentions, LLM-extracted claims checked against the log | GraphRAG · Building the graph | ready (needs an LLM) |
-| 4 | Ask the board | GraphRAG · Storing and querying | coming |
+| 4 | [Ask the board](https://kube.ar/graphrag/project/gallery-heist/ask-the-board): Neo4j, four retrieval routes, global search | GraphRAG · Storing and querying | ready (Neo4j; two checks need an LLM) |
 | 5 | Solve rate | GraphRAG · Measuring quality | coming |
 
 The detective agent (Agentic GraphRAG) follows once the board is complete.
@@ -38,7 +38,8 @@ uv run heist cases                  # the case packs
 uv run heist show practice/case-01  # a case's briefing
 ```
 
-Python 3.12 or newer. Milestones 1 and 2 need no API key and no database. The first run downloads a
+Python 3.12 or newer. Milestones 1 and 2 need no API key and no database; milestone 4 runs Neo4j
+(`docker compose up -d`). The first run downloads a
 small embedding model (about 30 MB), so it needs the network once.
 
 ### An LLM, from milestone 3 on

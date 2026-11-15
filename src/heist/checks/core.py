@@ -32,10 +32,10 @@ class Result:
         self.details.append(line)
 
 
-def attempt(result: Result, fn: Callable, *args):
+def attempt(result: Result, fn: Callable, *args, **kwargs):
     """Call your function. NotImplementedError marks the check as not started."""
     try:
-        value = fn(*args)
+        value = fn(*args, **kwargs)
     except NotImplementedError as e:
         result.started = False
         result.passed = False

@@ -3,6 +3,7 @@
 import importlib
 import importlib.util
 import os
+import sys
 
 import pytest
 
@@ -13,12 +14,31 @@ from heist.milestones import MILESTONES
 def load(path):
     spec = importlib.util.spec_from_file_location(f"ref_{path.stem}", path)
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
 
+def neo4j_up() -> bool:
+    try:
+        from neo4j import GraphDatabase
+
+        uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
+        auth = (os.environ.get("NEO4J_USER", "neo4j"), os.environ.get("NEO4J_PASSWORD", "heist-password"))
+        with GraphDatabase.driver(uri, auth=auth) as driver:
+            driver.verify_connectivity()
+        return True
+    except Exception:
+        return False
+
+
+NEEDS_NEO4J = {"4"}
+
+
 @pytest.mark.parametrize("mid", sorted(MILESTONES))
 def test_reference_passes(mid):
+    if mid in NEEDS_NEO4J and not neo4j_up():
+        pytest.skip("needs Neo4j: docker compose up -d")
     m = MILESTONES[mid]
     results = importlib.import_module(m.checks).run(load(ROOT / m.reference))
     # Checks that need an LLM are "not started" when none is configured (as in CI): skip those.
@@ -105,3 +125,26 @@ def test_reference_reads_a_model_answer(monkeypatch):
         tp, total = tp + len(want & have), total + len(want)
         assert have <= want, (doc.doc_id, have - want)
     assert tp / total > 0.95
+
+
+@pytest.mark.skipif(not neo4j_up(), reason="needs Neo4j: docker compose up -d")
+def test_model_written_queries_are_validated_then_run():
+    from heist.case import load_case
+
+    reference = load(ROOT / MILESTONES["4"].reference)
+    case = load_case("practice/case-01")
+    board = reference.store(case)
+
+    class FakeLLM:
+        def __init__(self, cypher):
+            self.cypher = cypher
+
+        def json(self, prompt, schema, system=None):
+            return {"cypher": self.cypher}
+
+    rows = reference.generated_query(
+        board, "how many transfers?", FakeLLM("MATCH (t:Transfer) RETURN count(t) AS n LIMIT 1")
+    )
+    assert rows == [{"n": len(case.transfers)}]
+    assert reference.generated_query(board, "wipe it", FakeLLM("MATCH (n) DETACH DELETE n")) == []
+    assert reference.store_summary(board)["people"] > 0  # the bad query never ran

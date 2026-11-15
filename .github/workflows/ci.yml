@@ -5,6 +5,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5
+        env:
+          NEO4J_AUTH: neo4j/heist-password
+        ports:
+          - 7687:7687
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p heist-password 'RETURN 1' || exit 1"
+          --health-interval 5s --health-timeout 5s --health-retries 40
     strategy:
       matrix:
         python: ["3.12", "3.14"]
