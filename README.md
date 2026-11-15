@@ -35,7 +35,11 @@ warrant when it's sure.
 | d1 | [The rookie](https://kube.ar/agentic-graphrag/project/gallery-heist/the-rookie): a baseline agent, and its failures named | Agentic GraphRAG · Overview | ready (needs an LLM) |
 | d2 | [The rulebook](https://kube.ar/agentic-graphrag/project/gallery-heist/the-rulebook): rules in the graph, one `describe` for every record, a distraction | What the agent knows | ready |
 | d3 | [The notebook](https://kube.ar/agentic-graphrag/project/gallery-heist/the-notebook): a memory with two times, observed vs claimed | Agent memory | ready |
-| d4–d8 | The investigation plan, the precinct, case review, budget and clearance, the hard case | the rest of the course | coming |
+| d4 | [The investigation plan](https://kube.ar/agentic-graphrag/project/gallery-heist/the-investigation-plan): a workflow graph, phases, meaning checks | How the agent acts | ready |
+| d5 | [The precinct](https://kube.ar/agentic-graphrag/project/gallery-heist/the-precinct): 59 tools, retrieval, chaining by type, a planted instruction | Agent tools | ready |
+| d6 | [Case review](https://kube.ar/agentic-graphrag/project/gallery-heist/case-review): execution graph, diagnosis, safe shipping | Evaluation and self-improvement | ready |
+| d7 | [Budget and clearance](https://kube.ar/agentic-graphrag/project/gallery-heist/budget-and-clearance): routing, cost per solved case, access, audit, erasure | Running in production | ready |
+| d8 | [The hard case](https://kube.ar/agentic-graphrag/project/gallery-heist/the-hard-case): your best detective on the hard pack, and an ablation | Putting it together | ready (needs an LLM) |
 
 ## Setup
 
