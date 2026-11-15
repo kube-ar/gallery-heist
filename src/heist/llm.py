@@ -20,6 +20,7 @@ checks your setup with two tiny calls.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -75,6 +76,7 @@ def _load_env() -> None:
 @dataclass
 class Usage:
     calls: int = 0
+    cached: int = 0  # answers read from .heist-cache instead of calling the provider
     input_tokens: int = 0
     output_tokens: int = 0
 
@@ -114,9 +116,26 @@ class LLM:
     # ── Providers ────────────────────────────────────────────────────────────
 
     def _call(self, prompt: str, system: str | None, schema: dict | None) -> str:
+        """Answers are cached on disk (.heist-cache/llm), so rerunning the checks costs nothing.
+
+        Set HEIST_LLM_CACHE=0 to always call the provider.
+        """
+        use_cache = os.environ.get("HEIST_LLM_CACHE", "1") != "0"
+        key = hashlib.sha256(
+            json.dumps([self.provider.name, self.model, self.effort, system, prompt, schema], sort_keys=True).encode()
+        ).hexdigest()
+        path = ROOT / ".heist-cache" / "llm" / f"{key}.json"
+        if use_cache and path.exists():
+            self.usage.cached += 1
+            return json.loads(path.read_text(encoding="utf-8"))["answer"]
         if self.provider.name == "anthropic":
-            return self._claude(prompt, system, schema)
-        return self._openai_compatible(prompt, system, schema)
+            answer = self._claude(prompt, system, schema)
+        else:
+            answer = self._openai_compatible(prompt, system, schema)
+        if use_cache:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"model": self.model, "answer": answer}), encoding="utf-8")
+        return answer
 
     def _claude(self, prompt: str, system: str | None, schema: dict | None) -> str:
         import anthropic

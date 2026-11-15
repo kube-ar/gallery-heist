@@ -286,3 +286,26 @@ def alibi(case: Case, person: str, wing: str, start: datetime, end: datetime) ->
     if all(not (region[room] & inside) for room, _, _ in spans):
         return "elsewhere"
     return "unknown"
+
+
+# ── Milestone 3 ───────────────────────────────────────────────────────────────
+
+
+def contradicts(case: Case, person: str, room: str, at: datetime, slack_minutes: int = 10) -> bool:
+    """Does the keycard log rule out that `person` was in `room` around `at`?
+
+    Only if, for the whole span `at` ± `slack_minutes` (people round their times), their badge
+    was somewhere `room` can't be reached from without a swipe. No badge, or a span the log knows
+    nothing about, rules nothing out.
+    """
+    from datetime import timedelta
+
+    badge = next((b.badge_id for b in case.badges if b.holder_id == person), None)
+    if badge is None:
+        return False
+    start, end = at - timedelta(minutes=slack_minutes), at + timedelta(minutes=slack_minutes)
+    spans = [s for s in badge_intervals(case).get(badge, []) if s[1] < end and (s[2] is None or s[2] > start)]
+    if not spans or spans[0][1] > start:
+        return False
+    region = regions(case)
+    return all(room not in region[r] for r, _, _ in spans)

@@ -49,6 +49,15 @@ MILESTONES = {
             checks="heist.checks.m2",
             extra=("m2_heist.ttl", "m2_shapes.ttl"),
         ),
+        Milestone(
+            id="3",
+            course="graphrag",
+            slug="reading-the-statements",
+            title="Reading the statements",
+            module="heist.graphrag.m3_reading_statements",
+            reference="reference/graphrag/m3_reading_statements.py",
+            checks="heist.checks.m3",
+        ),
     ]
 }
 

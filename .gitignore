@@ -10,3 +10,6 @@ cases/mine/
 # backups made by `heist use-reference`
 *.mine.py
 *.mine.ttl
+
+# cached LLM answers
+.heist-cache/
