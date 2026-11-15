@@ -67,6 +67,15 @@ MILESTONES = {
             reference="reference/graphrag/m4_ask_the_board.py",
             checks="heist.checks.m4",
         ),
+        Milestone(
+            id="5",
+            course="graphrag",
+            slug="solve-rate",
+            title="Solve rate",
+            module="heist.graphrag.m5_solve_rate",
+            reference="reference/graphrag/m5_solve_rate.py",
+            checks="heist.checks.m5",
+        ),
     ]
 }
 
