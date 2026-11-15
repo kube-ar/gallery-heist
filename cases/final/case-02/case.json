@@ -1,0 +1,54 @@
+{
+  "id": "case-02",
+  "pack": "final",
+  "seed": 902,
+  "level": "final",
+  "generator_version": 1,
+  "venue": "the Ostrander Collection",
+  "date": "2026-11-04",
+  "artwork": {
+    "title": "Night Ferry to Ostend",
+    "artist": "Ada Kestrel",
+    "year": 1907
+  },
+  "room": {
+    "id": "R13",
+    "name": "Restoration Lab",
+    "wing": "east"
+  },
+  "last_seen": "2026-11-04T21:57",
+  "discovered": "2026-11-04T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "east",
+        "start": "21:57",
+        "end": "23:45"
+      },
+      {
+        "wing": "west",
+        "start": "22:30",
+        "end": "23:00"
+      },
+      {
+        "wing": "service",
+        "start": "21:00",
+        "end": "21:30"
+      }
+    ],
+    "connection": [
+      {
+        "a": "G-326",
+        "b": "E-1145"
+      },
+      {
+        "a": "G-509",
+        "b": "E-1204"
+      },
+      {
+        "a": "G-456",
+        "b": "G-326"
+      }
+    ]
+  }
+}

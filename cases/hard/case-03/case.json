@@ -1,0 +1,54 @@
+{
+  "id": "case-03",
+  "pack": "hard",
+  "seed": 403,
+  "level": "hard",
+  "generator_version": 1,
+  "venue": "the Ostrander Collection",
+  "date": "2026-05-09",
+  "artwork": {
+    "title": "Girl Reading by a Stove",
+    "artist": "Oswin Tarrant",
+    "year": 1929
+  },
+  "room": {
+    "id": "R13",
+    "name": "Restoration Lab",
+    "wing": "east"
+  },
+  "last_seen": "2026-05-09T22:17",
+  "discovered": "2026-05-09T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "east",
+        "start": "22:17",
+        "end": "23:45"
+      },
+      {
+        "wing": "west",
+        "start": "22:30",
+        "end": "23:00"
+      },
+      {
+        "wing": "service",
+        "start": "20:30",
+        "end": "21:00"
+      }
+    ],
+    "connection": [
+      {
+        "a": "E-1987",
+        "b": "E-1148"
+      },
+      {
+        "a": "E-1492",
+        "b": "G-984"
+      },
+      {
+        "a": "E-1662",
+        "b": "C-247"
+      }
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "case-04",
+  "pack": "easy",
+  "seed": 204,
+  "level": "easy",
+  "generator_version": 1,
+  "venue": "the Castell Moor Gallery",
+  "date": "2026-05-19",
+  "artwork": {
+    "title": "Winter Market at Noon",
+    "artist": "Tomas Vierling",
+    "year": 1882
+  },
+  "room": {
+    "id": "R21",
+    "name": "Glass Room",
+    "wing": "west"
+  },
+  "last_seen": "2026-05-19T22:17",
+  "discovered": "2026-05-19T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "west",
+        "start": "22:17",
+        "end": "23:45"
+      },
+      {
+        "wing": "east",
+        "start": "22:00",
+        "end": "22:30"
+      },
+      {
+        "wing": "service",
+        "start": "20:30",
+        "end": "21:00"
+      }
+    ],
+    "connection": [
+      {
+        "a": "G-547",
+        "b": "E-1065"
+      },
+      {
+        "a": "E-1065",
+        "b": "E-1904"
+      },
+      {
+        "a": "G-904",
+        "b": "G-751"
+      }
+    ]
+  }
+}

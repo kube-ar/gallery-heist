@@ -1,0 +1,54 @@
+{
+  "id": "case-02",
+  "pack": "medium",
+  "seed": 302,
+  "level": "medium",
+  "generator_version": 1,
+  "venue": "the Verrin Museum of Art",
+  "date": "2026-07-08",
+  "artwork": {
+    "title": "Lanterns on the Canal",
+    "artist": "Mirela Danescu",
+    "year": 1929
+  },
+  "room": {
+    "id": "R12",
+    "name": "Portrait Gallery",
+    "wing": "east"
+  },
+  "last_seen": "2026-07-08T22:12",
+  "discovered": "2026-07-08T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "east",
+        "start": "22:12",
+        "end": "23:45"
+      },
+      {
+        "wing": "west",
+        "start": "21:30",
+        "end": "22:00"
+      },
+      {
+        "wing": "service",
+        "start": "22:00",
+        "end": "22:30"
+      }
+    ],
+    "connection": [
+      {
+        "a": "E-1302",
+        "b": "G-527"
+      },
+      {
+        "a": "E-1302",
+        "b": "E-1456"
+      },
+      {
+        "a": "E-1302",
+        "b": "G-524"
+      }
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "case-02",
+  "pack": "easy",
+  "seed": 202,
+  "level": "easy",
+  "generator_version": 1,
+  "venue": "the Castell Moor Gallery",
+  "date": "2026-04-14",
+  "artwork": {
+    "title": "Woman with a Green Parasol",
+    "artist": "Mirela Danescu",
+    "year": 1885
+  },
+  "room": {
+    "id": "R11",
+    "name": "Map Room",
+    "wing": "east"
+  },
+  "last_seen": "2026-04-14T22:30",
+  "discovered": "2026-04-14T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "east",
+        "start": "22:30",
+        "end": "23:45"
+      },
+      {
+        "wing": "west",
+        "start": "22:00",
+        "end": "22:30"
+      },
+      {
+        "wing": "service",
+        "start": "20:30",
+        "end": "21:00"
+      }
+    ],
+    "connection": [
+      {
+        "a": "G-919",
+        "b": "C-208"
+      },
+      {
+        "a": "G-428",
+        "b": "C-208"
+      },
+      {
+        "a": "G-913",
+        "b": "G-919"
+      }
+    ]
+  }
+}

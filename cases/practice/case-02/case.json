@@ -1,0 +1,54 @@
+{
+  "id": "case-02",
+  "pack": "practice",
+  "seed": 102,
+  "level": "practice",
+  "generator_version": 1,
+  "venue": "the Ostrander Collection",
+  "date": "2026-09-19",
+  "artwork": {
+    "title": "Portrait of a Cartographer",
+    "artist": "Elsa Marrow",
+    "year": 1927
+  },
+  "room": {
+    "id": "R21",
+    "name": "Print Room",
+    "wing": "west"
+  },
+  "last_seen": "2026-09-19T22:36",
+  "discovered": "2026-09-19T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "west",
+        "start": "22:36",
+        "end": "23:45"
+      },
+      {
+        "wing": "east",
+        "start": "21:00",
+        "end": "21:30"
+      },
+      {
+        "wing": "service",
+        "start": "22:00",
+        "end": "22:30"
+      }
+    ],
+    "connection": [
+      {
+        "a": "G-546",
+        "b": "G-998"
+      },
+      {
+        "a": "E-1752",
+        "b": "E-1699"
+      },
+      {
+        "a": "E-1252",
+        "b": "C-833"
+      }
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "case-01",
+  "pack": "final",
+  "seed": 901,
+  "level": "final",
+  "generator_version": 1,
+  "venue": "the Belvaro House Museum",
+  "date": "2026-06-26",
+  "artwork": {
+    "title": "The Clockmaker's Bench",
+    "artist": "Elsa Marrow",
+    "year": 1919
+  },
+  "room": {
+    "id": "R21",
+    "name": "Glass Room",
+    "wing": "west"
+  },
+  "last_seen": "2026-06-26T22:17",
+  "discovered": "2026-06-26T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "west",
+        "start": "22:17",
+        "end": "23:45"
+      },
+      {
+        "wing": "east",
+        "start": "22:00",
+        "end": "22:30"
+      },
+      {
+        "wing": "service",
+        "start": "21:30",
+        "end": "22:00"
+      }
+    ],
+    "connection": [
+      {
+        "a": "G-550",
+        "b": "C-519"
+      },
+      {
+        "a": "E-1778",
+        "b": "E-1867"
+      },
+      {
+        "a": "G-662",
+        "b": "E-1778"
+      }
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "case-03",
+  "pack": "final",
+  "seed": 903,
+  "level": "final",
+  "generator_version": 1,
+  "venue": "the Belvaro House Museum",
+  "date": "2026-02-09",
+  "artwork": {
+    "title": "Two Sisters at the Window",
+    "artist": "Celestine Roux",
+    "year": 1872
+  },
+  "room": {
+    "id": "R21",
+    "name": "Sculpture Hall",
+    "wing": "west"
+  },
+  "last_seen": "2026-02-09T22:13",
+  "discovered": "2026-02-09T23:45",
+  "questions": {
+    "who_was_in": [
+      {
+        "wing": "west",
+        "start": "22:13",
+        "end": "23:45"
+      },
+      {
+        "wing": "east",
+        "start": "20:30",
+        "end": "21:00"
+      },
+      {
+        "wing": "service",
+        "start": "20:00",
+        "end": "20:30"
+      }
+    ],
+    "connection": [
+      {
+        "a": "G-323",
+        "b": "E-1623"
+      },
+      {
+        "a": "G-607",
+        "b": "E-1514"
+      },
+      {
+        "a": "E-1970",
+        "b": "E-1277"
+      }
+    ]
+  }
+}

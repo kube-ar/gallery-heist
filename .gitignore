@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+dist/
+# your own generated cases
+cases/mine/
+# backups made by `heist use-reference`
+*.mine.py

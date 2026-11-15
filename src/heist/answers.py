@@ -1,0 +1,182 @@
+"""The official reading of a case's data: what the checks compare your answers with.
+
+Spoiler warning: this file answers milestone 1's questions straight from the tables, with no
+graph. Read it after you've built yours, if you want to compare.
+"""
+
+from __future__ import annotations
+
+from collections import defaultdict, deque
+from datetime import datetime
+
+from .case import Case
+
+
+class Parties:
+    """Maps any key you might return to one party.
+
+    A party is a person in one of the museum's lists (staff, guests, contractors), named by
+    their id there. Anyone else is named by their phone number. A badge belongs to its
+    holder, a phone to whoever lists it, an account to whoever owns its contact phone.
+    """
+
+    def __init__(self, case: Case):
+        self.by_key: dict[str, str] = {}
+        self.names: dict[str, str] = {}
+        for s in case.staff:
+            self._add(s.employee_id, s.phone, s.full_name)
+        for g in case.guests:
+            last, _, first = g.name.partition(", ")
+            self._add(g.guest_id, g.phone, f"{first} {last}")
+        for w in case.contractors:
+            self._add(w.contractor_id, w.phone, w.worker_name)
+        for b in case.badges:
+            self.by_key[b.badge_id] = b.holder_id
+        phones = {c.caller for c in case.calls} | {c.callee for c in case.calls}
+        phones |= {a.contact_phone for a in case.accounts}
+        for p in phones:
+            self.by_key.setdefault(p, p)
+        for a in case.accounts:
+            self.by_key[a.account_id] = self.by_key[a.contact_phone]
+            self.names.setdefault(self.by_key[a.account_id], a.holder_name.title())
+
+    def _add(self, native: str, phone: str, name: str) -> None:
+        self.by_key[native] = native
+        self.by_key[phone] = native
+        self.names[native] = name
+
+    def party(self, key: str) -> str | None:
+        return self.by_key.get(str(key).strip())
+
+    def label(self, party: str) -> str:
+        name = self.names.get(party)
+        return f"{party} ({name})" if name else party
+
+
+def badge_intervals(case: Case) -> dict[str, list[tuple[str, datetime, datetime | None]]]:
+    """Where each badge was, according to the keycard log alone.
+
+    A badge is in the room it last swiped into (granted swipes only) until its next granted
+    swipe. Before its first swipe, the log says nothing about it.
+    """
+    out: dict[str, list[tuple[str, datetime, datetime | None]]] = defaultdict(list)
+    by_badge: dict[str, list] = defaultdict(list)
+    for s in case.swipes:
+        if s.granted:
+            by_badge[s.badge_id].append(s)
+    for badge, swipes in by_badge.items():
+        swipes.sort(key=lambda s: s.time)
+        for cur, nxt in zip(swipes, [*swipes[1:], None]):
+            out[badge].append((cur.to_room, cur.time, nxt.time if nxt else None))
+    return out
+
+
+def in_wing(case: Case, wing: str, start: datetime, end: datetime) -> set[str]:
+    """Parties whose badge was in a room of `wing` at some moment in [start, end)."""
+    wings = {r.room_id: r.wing for r in case.rooms}
+    parties = Parties(case)
+    found = set()
+    for badge, spans in badge_intervals(case).items():
+        for room, since, until in spans:
+            if wings[room] == wing and since < end and (until is None or until > start):
+                found.add(parties.party(badge))
+    return {p for p in found if p}
+
+
+def links(case: Case) -> dict[str, set[str]]:
+    """Who is directly linked to whom.
+
+    Two parties are linked when they called each other, sent each other money, sat at the
+    same dinner table, one invited the other, or they work for the same contractor.
+    """
+    parties = Parties(case)
+    adj: dict[str, set[str]] = defaultdict(set)
+
+    def link(a: str | None, b: str | None) -> None:
+        if a and b and a != b:
+            adj[a].add(b)
+            adj[b].add(a)
+
+    for c in case.calls:
+        link(parties.party(c.caller), parties.party(c.callee))
+    for t in case.transfers:
+        link(parties.party(t.from_account), parties.party(t.to_account))
+    tables: dict[int, list[str]] = defaultdict(list)
+    for s in case.seating:
+        tables[s.table].append(s.attendee_id)
+    for members in tables.values():
+        for i, a in enumerate(members):
+            for b in members[i + 1 :]:
+                link(a, b)
+    for g in case.guests:
+        link(g.guest_id, g.invited_by)
+    companies: dict[str, list[str]] = defaultdict(list)
+    for w in case.contractors:
+        companies[w.company].append(w.contractor_id)
+    for members in companies.values():
+        for i, a in enumerate(members):
+            for b in members[i + 1 :]:
+                link(a, b)
+    return adj
+
+
+def shortest_hops(case: Case, a: str, b: str, adj: dict[str, set[str]] | None = None) -> int | None:
+    """Fewest links between two parties, or None when nothing connects them."""
+    adj = adj or links(case)
+    parties = Parties(case)
+    start, goal = parties.party(a), parties.party(b)
+    if start is None or goal is None:
+        return None
+    seen, queue = {start: 0}, deque([start])
+    while queue:
+        cur = queue.popleft()
+        if cur == goal:
+            return seen[cur]
+        for nxt in sorted(adj[cur]):
+            if nxt not in seen:
+                seen[nxt] = seen[cur] + 1
+                queue.append(nxt)
+    return None
+
+
+def canonical_loop(loop: list[str]) -> tuple[str, ...]:
+    """The same loop written from its smallest account, so rotations compare equal."""
+    i = loop.index(min(loop))
+    return tuple(loop[i:] + loop[:i])
+
+
+def money_loops(case: Case) -> set[tuple[str, ...]]:
+    """Every directed loop in the account-to-account transfer graph (each account once)."""
+    adj: dict[str, set[str]] = defaultdict(set)
+    for t in case.transfers:
+        if t.from_account != t.to_account:
+            adj[t.from_account].add(t.to_account)
+    loops: set[tuple[str, ...]] = set()
+    nodes = sorted(set(adj) | {n for v in adj.values() for n in v})
+    for s in nodes:
+        # Only loops whose smallest account is `s`: each loop is found exactly once.
+        stack = [(s, [s])]
+        while stack:
+            cur, path = stack.pop()
+            for nxt in sorted(adj[cur]):
+                if nxt == s:
+                    loops.add(canonical_loop(path))
+                elif nxt > s and nxt not in path:
+                    stack.append((nxt, [*path, nxt]))
+    return loops
+
+
+def counts(case: Case) -> dict[str, int]:
+    phones = {s.phone for s in case.staff} | {g.phone for g in case.guests} | {w.phone for w in case.contractors}
+    phones |= {c.caller for c in case.calls} | {c.callee for c in case.calls} | {a.contact_phone for a in case.accounts}
+    return {
+        "people": len(case.staff) + len(case.guests) + len(case.contractors),
+        "badges": len(case.badges),
+        "rooms": len(case.rooms),
+        "doors": len(case.doors),
+        "phones": len(phones),
+        "accounts": len(case.accounts),
+        "swipes": len(case.swipes),
+        "calls": len(case.calls),
+        "transfers": len(case.transfers),
+    }
