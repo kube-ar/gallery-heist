@@ -264,3 +264,164 @@ def get_llm(provider: str | None = None, model: str | None = None) -> LLM:
     if effort and name != "anthropic":
         effort = None  # an effort setting only applies to Claude
     return LLM(p, chosen, effort)
+
+
+# ── Conversations with tools (the agent milestones) ──────────────────────────
+
+
+@dataclass
+class ToolCall:
+    id: str
+    name: str
+    arguments: dict
+
+
+@dataclass
+class Turn:
+    text: str
+    tool_calls: list[ToolCall]
+
+    @property
+    def done(self) -> bool:
+        """The model answered without asking for a tool."""
+        return not self.tool_calls
+
+
+class Conversation:
+    """A tool-using conversation with the configured model.
+
+        convo = Conversation(get_llm(), tools=[{"name": ..., "description": ..., "parameters": {...}}], system="...")
+        turn = convo.send("Investigate the case.")
+        while not turn.done:
+            turn = convo.reply({call.id: run_tool(call.name, call.arguments) for call in turn.tool_calls})
+
+    Tools are described once, in JSON Schema, for every provider. The history stays in the
+    provider's own format, so the model's own blocks (Claude's thinking included) go back to it
+    unchanged. Results of one turn's tool calls go back together, in one message.
+    """
+
+    def __init__(self, llm: LLM, tools: list[dict], system: str | None = None):
+        self.llm, self.tools, self.system = llm, tools, system
+        self.messages: list[Any] = []
+        self.transcript: list[dict] = []  # provider-neutral, for logs and execution records
+
+    def send(self, text: str) -> Turn:
+        self.transcript.append({"role": "user", "text": text})
+        if self.llm.provider.name == "anthropic":
+            self.messages.append({"role": "user", "content": text})
+        else:
+            self.messages.append({"role": "user", "content": text})
+        return self._step()
+
+    def reply(self, results: dict[str, Any], errors: set[str] | frozenset[str] = frozenset()) -> Turn:
+        """Send back the result of every tool call of the last turn (`errors`: the ids that failed)."""
+        rendered = {cid: v if isinstance(v, str) else json.dumps(v, default=str) for cid, v in results.items()}
+        for cid, content in rendered.items():
+            self.transcript.append({"role": "tool", "id": cid, "content": content, "error": cid in errors})
+        if self.llm.provider.name == "anthropic":
+            blocks = [{"type": "tool_result", "tool_use_id": cid, "content": content, **({"is_error": True} if cid in errors else {})}
+                      for cid, content in rendered.items()]  # fmt: skip
+            self.messages.append({"role": "user", "content": blocks})
+        else:
+            for cid, content in rendered.items():
+                self.messages.append({"role": "tool", "tool_call_id": cid, "content": content})
+        return self._step()
+
+    def _step(self) -> Turn:
+        turn = self._claude() if self.llm.provider.name == "anthropic" else self._openai_compatible()
+        self.transcript.append(
+            {"role": "assistant", "text": turn.text, "tool_calls": [c.__dict__ for c in turn.tool_calls]}
+        )
+        return turn
+
+    def _claude(self) -> Turn:
+        import anthropic
+
+        llm = self.llm
+        if llm._client is None:
+            key = os.environ.get(llm.provider.key_env)
+            llm._client = anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
+        request: dict[str, Any] = {
+            "model": llm.model,
+            "max_tokens": MAX_TOKENS,
+            "messages": self.messages,
+            "tools": [
+                {"name": t["name"], "description": t["description"], "input_schema": t["parameters"]}
+                for t in self.tools
+            ],  # fmt: skip
+            "cache_control": {"type": "ephemeral"},  # the tools and the growing history are read from cache
+        }
+        if self.system:
+            request["system"] = self.system
+        if llm.effort:
+            request["output_config"] = {"effort": llm.effort}
+        try:
+            if llm.model in CLAUDE_FALLBACKS:
+                response = llm._client.beta.messages.create(
+                    betas=["server-side-fallback-2026-07-01"], fallbacks="default", **request
+                )
+            else:
+                response = llm._client.messages.create(**request)
+        except anthropic.APIStatusError as e:
+            raise LLMError(f"{llm}: the API answered {e.status_code}: {e.message}") from e
+        except anthropic.APIConnectionError as e:
+            raise LLMError(f"{llm}: can't reach the API ({e})") from e
+        llm._count(response.usage.input_tokens, response.usage.output_tokens)
+        if response.stop_reason == "refusal":
+            raise LLMError(f"{llm}: the model declined this request")
+        if response.stop_reason == "max_tokens":
+            raise LLMError(f"{llm}: the turn hit the {MAX_TOKENS}-token limit")
+        self.messages.append({"role": "assistant", "content": response.content})
+        text = "".join(b.text for b in response.content if b.type == "text")
+        calls = [ToolCall(b.id, b.name, dict(b.input)) for b in response.content if b.type == "tool_use"]
+        return Turn(text, calls)
+
+    def _openai_compatible(self) -> Turn:
+        import openai
+
+        llm = self.llm
+        if llm._client is None:
+            key = os.environ.get(llm.provider.key_env)
+            if not key:
+                raise LLMError(f"Set {llm.provider.key_env} in .env for provider {llm.provider.name!r}")
+            llm._client = openai.OpenAI(api_key=key, base_url=llm.provider.base_url)
+        messages = ([{"role": "system", "content": self.system}] if self.system else []) + self.messages
+        tools = [{"type": "function", "function": {"name": t["name"], "description": t["description"],
+                                                   "parameters": t["parameters"]}} for t in self.tools]  # fmt: skip
+        try:
+            response = llm._client.chat.completions.create(model=llm.model, messages=messages, tools=tools)
+        except openai.APIStatusError as e:
+            raise LLMError(f"{llm}: the API answered {e.status_code}: {e.message}") from e
+        except openai.APIConnectionError as e:
+            raise LLMError(f"{llm}: can't reach {llm.provider.base_url or 'the API'} ({e})") from e
+        if response.usage:
+            llm._count(response.usage.prompt_tokens, response.usage.completion_tokens)
+        message = response.choices[0].message
+        calls = []
+        for c in message.tool_calls or []:
+            try:
+                arguments = json.loads(c.function.arguments or "{}")
+            except json.JSONDecodeError:
+                arguments = {"_unparsed": c.function.arguments}
+            calls.append(ToolCall(c.id, c.function.name, arguments))
+        self.messages.append(
+            {
+                "role": "assistant",
+                "content": message.content or "",
+                **(
+                    {
+                        "tool_calls": [
+                            {
+                                "id": c.id,
+                                "type": "function",
+                                "function": {"name": c.name, "arguments": json.dumps(c.arguments)},
+                            }
+                            for c in calls
+                        ]
+                    }
+                    if calls
+                    else {}
+                ),
+            }  # fmt: skip
+        )
+        return Turn(message.content or "", calls)
