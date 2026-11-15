@@ -145,7 +145,7 @@ class Writer:
         self.sentence += 1
 
     def paragraph(self) -> None:
-        if self.parts:
+        if self.parts and not self.parts[-1].endswith("\n\n"):
             self._add("\n\n")
 
     def done(self) -> None:
