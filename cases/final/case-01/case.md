@@ -1,8 +1,8 @@
-# case-01: The Clockmaker's Bench
+# case-01: Girl Reading by a Stove
 
-On the night of 2026-06-26, the Belvaro House Museum held its gala. At 23:45 a guard
-on a round found an empty frame in the Glass Room (west wing):
-*The Clockmaker's Bench* by Elsa Marrow (1919) was gone. A guard's round at 22:37
+On the night of 2026-06-25, the Quillfield Museum held its gala. At 23:45 a guard
+on a round found an empty frame in the Print Room (west wing):
+*Girl Reading by a Stove* by Mirela Danescu (1931) was gone. A guard's round at 22:32
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

@@ -1,8 +1,8 @@
-# case-02: Night Ferry to Ostend
+# case-02: The Salt Marsh in Winter
 
-On the night of 2026-11-04, the Ostrander Collection held its gala. At 23:45 a guard
+On the night of 2026-08-05, the Castell Moor Gallery held its gala. At 23:45 a guard
 on a round found an empty frame in the Restoration Lab (east wing):
-*Night Ferry to Ostend* by Ada Kestrel (1907) was gone. A guard's round at 22:29
+*The Salt Marsh in Winter* by Yumiko Arisawa (1899) was gone. A guard's round at 21:37
 had found it in place.
 
 The museum's systems exported everything they recorded that night. They don't share ids:

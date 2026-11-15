@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import random
 import shutil
 from pathlib import Path
@@ -12,13 +13,15 @@ from ..case import CASES, load_case
 from .export import export
 from .simulate import simulate
 
-# pack -> (level, how the thefts are done in order, first seed, answers hidden)
+# pack -> (level, how the thefts are done in order, first seed, answers hidden). The final pack's
+# seed is a secret kept by the maintainers (HEIST_FINAL_SEED): with it, anyone could rebuild the
+# answers, so it isn't in the code and its cases don't record it.
 PACKS = {
     "practice": ("practice", ("insider",) * 3, 101, False),
     "easy": ("easy", ("insider",) * 4, 201, False),
     "medium": ("medium", ("borrowed_badge", "insider", "borrowed_badge", "insider"), 301, False),
     "hard": ("hard", ("fire_door", "borrowed_badge", "fire_door", "borrowed_badge"), 401, False),
-    "final": ("final", ("borrowed_badge", "fire_door", "insider"), 901, True),
+    "final": ("final", ("borrowed_badge", "fire_door", "insider"), None, True),
 }
 
 
@@ -36,6 +39,11 @@ def build_case(
 
 def build_pack(pack: str, out: Path = CASES) -> list[Path]:
     level, methods, first_seed, hidden = PACKS[pack]
+    if first_seed is None:
+        secret = os.environ.get("HEIST_FINAL_SEED")
+        if not secret:
+            raise SystemExit("The final pack is built from a secret seed (HEIST_FINAL_SEED), kept by the maintainers.")
+        first_seed = int(secret)
     folders = []
     for i, method in enumerate(methods):
         folder = out / pack / f"case-{i + 1:02d}"

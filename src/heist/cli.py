@@ -97,13 +97,32 @@ def cmd_generate(args) -> None:
         for folder in build_pack(args.pack):
             print(f"wrote {folder.relative_to(ROOT)}")
         return
-    _, methods, first_seed, hidden = PACKS["final"]
-    if first_seed <= args.seed < first_seed + len(methods):
-        sys.exit("Those seeds build the final pack, whose answers are hidden on purpose. Pick another seed.")
     folder = Path(args.out) if args.out else CASES / "mine" / f"case-{args.seed}"
     build_case(args.seed, args.level, folder, folder.name, folder.parent.name, method=args.method)
     name = folder.relative_to(CASES).as_posix() if folder.is_relative_to(CASES) else str(folder)
     print(f"wrote {folder} · load it with load_case({name!r})")
+
+
+def cmd_llm(args) -> None:
+    from .llm import LLMError, get_llm
+
+    try:
+        llm = get_llm()
+        print(f"Provider {llm.provider.name}, model {llm.model}" + (f", effort {llm.effort}" if llm.effort else ""))
+        print("text:", llm.text("Reply with the single word: ready").strip()[:80])
+        answer = llm.json(
+            "Is a fire door an archway? Answer in the JSON format given.",
+            schema={
+                "type": "object",
+                "properties": {"answer": {"type": "boolean"}, "why": {"type": "string"}},
+                "required": ["answer", "why"],
+                "additionalProperties": False,
+            },
+        )
+        print("json:", answer)
+        print(f"OK: {llm.usage.calls} calls, {llm.usage.input_tokens} tokens in, {llm.usage.output_tokens} out.")
+    except LLMError as e:
+        sys.exit(f"LLM setup problem: {e}")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -128,6 +147,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("milestone")
     p.add_argument("--undo", action="store_true", help="put your own file back")
     p.set_defaults(fn=cmd_use_reference)
+
+    p = sub.add_parser("llm", help="check your LLM provider setup (.env) with two tiny calls")
+    p.set_defaults(fn=cmd_llm)
 
     p = sub.add_parser("generate", help="build a new case (or rebuild a shipped pack)")
     p.add_argument("--seed", type=int, default=1)
