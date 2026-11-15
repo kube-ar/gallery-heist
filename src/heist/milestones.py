@@ -85,6 +85,24 @@ MILESTONES = {
             reference="reference/agent/d1_the_rookie.py",
             checks="heist.checks.d1",
         ),
+        Milestone(
+            id="d2",
+            course="agentic-graphrag",
+            slug="the-rulebook",
+            title="The rulebook",
+            module="heist.agent.d2_the_rulebook",
+            reference="reference/agent/d2_the_rulebook.py",
+            checks="heist.checks.d2",
+        ),
+        Milestone(
+            id="d3",
+            course="agentic-graphrag",
+            slug="the-notebook",
+            title="The notebook",
+            module="heist.agent.d3_the_notebook",
+            reference="reference/agent/d3_the_notebook.py",
+            checks="heist.checks.d3",
+        ),
     ]
 }
 
