@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import random
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
@@ -60,6 +62,32 @@ class Action:
     summary: str
 
 
+def records(case: Case) -> dict[str, list[dict]]:
+    """Every system's rows as plain dicts, by table name: the material `describe` reads (detective 2)."""
+    people = [{"id": s.employee_id, "name": s.full_name, "kind": "staff", "role": s.role, "phone": s.phone}
+              for s in case.staff]  # fmt: skip
+    for g in case.guests:
+        last, _, first = g.name.partition(", ")
+        people.append(
+            {"id": g.guest_id, "name": f"{first} {last}", "kind": "guest", "role": g.category, "phone": g.phone}
+        )
+    people += [{"id": w.contractor_id, "name": w.worker_name, "kind": "contractor", "role": w.job, "phone": w.phone}
+               for w in case.contractors]  # fmt: skip
+    return {
+        "people": people,
+        "badges": [{"badge_id": b.badge_id, "holder_id": b.holder_id, "zones": ";".join(b.zones)} for b in case.badges],
+        "rooms": [{"room_id": r.room_id, "name": r.name, "wing": r.wing} for r in case.rooms],
+        "doors": [
+            {"door_id": d.door_id, "room_a": d.room_a, "room_b": d.room_b, "reader": d.has_reader, "kind": d.kind}
+            for d in case.doors
+        ],  # fmt: skip
+        "cameras": [{"camera_id": c.camera_id, "room_id": c.room_id} for c in case.cameras],
+        "accounts": [
+            {"account_id": a.account_id, "holder": a.holder_name, "phone": a.contact_phone} for a in case.accounts
+        ],
+    }
+
+
 @dataclass
 class Precinct:
     case: Case
@@ -67,6 +95,7 @@ class Precinct:
     spent: int = 0
     log: list[Action] = field(default_factory=list)
     accusation: dict | None = None
+    distract: bool = False  # one innocent witness also "remembers" something that looks decisive (detective 2)
 
     # ── Tool descriptions ─────────────────────────────────────────────────────
 
@@ -222,7 +251,36 @@ class Precinct:
         self._phone_of(person)  # validates the id
         author = {p["id"]: p["name"] for p in self._list_people()}[person]
         doc = next((d for d in self.case.documents if d.kind == "statement" and d.author == author), None)
-        return doc.text if doc else f"{author} has nothing to add to what the night shift already knows."
+        text = doc.text if doc else f"{author} has nothing to add to what the night shift already knows."
+        planted = self.distraction()
+        if planted and planted["witness"] == person:
+            text = text.rstrip() + "\n\n" + planted["sentence"] + "\n"
+        return text
+
+    def distraction(self) -> dict | None:
+        """In distract mode: which witness adds a near-miss, about whom, and the sentence they add.
+
+        It names an innocent member of staff near the stolen painting's room just before the
+        discovery: it looks like the answer, and it isn't. Only on labeled cases (it reads the truth).
+        """
+        truth_path = self.case.path / "truth.json"
+        if not self.distract or not truth_path.exists():
+            return None
+        crime = json.loads(truth_path.read_text(encoding="utf-8"))["crime"]
+        ring = {crime["culprit"]["native_id"], crime["accomplice"]["native_id"]}
+        if crime.get("badge_victim"):
+            ring.add(crime["badge_victim"]["native_id"])
+        rng = random.Random(f"{self.case.id}:distract")
+        staff = sorted(s.employee_id for s in self.case.staff if s.employee_id not in ring)
+        witnesses = sorted(p["id"] for p in self._list_people() if p["id"] not in ring)
+        target = rng.choice(staff)
+        witness = rng.choice([w for w in witnesses if w != target])
+        names = {p["id"]: p["name"] for p in self._list_people()}
+        room = self.case.meta["room"]["name"]
+        sentence = (
+            f"Now that I think of it, I'm sure I saw {names[target]} coming out of the {room} just before the alarm."
+        )
+        return {"witness": witness, "about": target, "sentence": sentence}
 
     def _accuse(self, culprit: str, accomplice: str, method: str, evidence: list[str]) -> dict:
         self.accusation = {"culprit": culprit, "accomplice": accomplice or None, "method": method,
@@ -280,3 +338,61 @@ class Precinct:
 
     def record(self) -> list[dict]:
         return [asdict(a) for a in self.log]
+
+
+# ── Facts from tool results (detective 3) ─────────────────────────────────────
+
+_WORDS = ["twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"]
+
+
+def evening(hour: int, minute: int) -> str:
+    """A time as people say it in the evening, as HH:MM: 7:35 means 19:35, 12:15 means 00:15."""
+    if hour == 12:
+        hour = 0
+    elif hour < 12:
+        hour += 12
+    return f"{hour % 24:02d}:{minute:02d}"
+
+
+def spoken_time(sentence: str) -> str | None:
+    """The time a sentence states, as HH:MM, or None. Reads "at 22:15", "around 7:35", "at about a
+    quarter past ten", "half past nine", "a quarter to eleven", "just after ten"."""
+    s = sentence.lower()
+    m = re.search(r"\b(\d{1,2}):(\d{2})\b", s)
+    if m:
+        h, mm = int(m.group(1)), int(m.group(2))
+        return f"{h:02d}:{mm:02d}" if h >= 13 or h == 0 else evening(h, mm)
+    word = "|".join(_WORDS)
+    for pattern, offset in ((rf"quarter past ({word})", 15), (rf"half past ({word})", 30), (rf"quarter to ({word})", -15),
+                            (rf"(?:just after|at about|a little before) ({word})\b", 0)):  # fmt: skip
+        m = re.search(pattern, s)
+        if m:
+            h = _WORDS.index(m.group(1))
+            total = (h * 60 + offset) % (12 * 60)
+            return evening(total // 60 or 12 if total // 60 == 0 else total // 60, total % 60)
+    return None
+
+
+def extract_facts(case: Case, tool: str, arguments: dict, result: Any) -> list[dict]:
+    """Facts about where people were, from one tool result.
+
+    Keycard rows are observed: {"person", "room", "at", "kind": "observed", "source": "keycard_log"}.
+    Statements are claimed by their author: {"person", "room", "at", "kind": "claimed", "source": "statement"}.
+    """
+    facts: list[dict] = []
+    if tool == "keycard_log" and isinstance(result, list):
+        for row in result:
+            if row.get("result") == "granted" and row.get("holder"):
+                facts.append({"person": row["holder"], "room": row["to_room"], "at": row["time"], "kind": "observed",
+                              "source": "keycard_log"})  # fmt: skip
+    if tool == "interview" and isinstance(result, str):
+        rooms = sorted(((r.name, r.room_id) for r in case.rooms), key=lambda x: -len(x[0]))
+        for sentence in re.split(r"(?<=[.!?])\s+", result):
+            if not re.search(r"\bI (was|went)\b", sentence):
+                continue
+            room = next((rid for name, rid in rooms if f"the {name}" in sentence), None)
+            at = spoken_time(sentence)
+            if room and at:
+                facts.append({"person": arguments.get("person"), "room": room, "at": at, "kind": "claimed",
+                              "source": "statement"})  # fmt: skip
+    return facts

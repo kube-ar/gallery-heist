@@ -33,7 +33,9 @@ warrant when it's sure.
 | # | Milestone | Course chapter | Status |
 |---|---|---|---|
 | d1 | [The rookie](https://kube.ar/agentic-graphrag/project/gallery-heist/the-rookie): a baseline agent, and its failures named | Agentic GraphRAG · Overview | ready (needs an LLM) |
-| d2–d8 | The rulebook, the notebook, the investigation plan, the precinct, case review, budget and clearance, the hard case | the rest of the course | coming |
+| d2 | [The rulebook](https://kube.ar/agentic-graphrag/project/gallery-heist/the-rulebook): rules in the graph, one `describe` for every record, a distraction | What the agent knows | ready |
+| d3 | [The notebook](https://kube.ar/agentic-graphrag/project/gallery-heist/the-notebook): a memory with two times, observed vs claimed | Agent memory | ready |
+| d4–d8 | The investigation plan, the precinct, case review, budget and clearance, the hard case | the rest of the course | coming |
 
 ## Setup
 
