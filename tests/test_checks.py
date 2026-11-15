@@ -185,3 +185,25 @@ def test_rookie_loop_stops_at_the_accusation():
     assert desk.accusation is not None and [a.tool for a in desk.log][-1] == "accuse"
     assert "briefing" not in [a.tool for a in desk.log]
     assert reference.failures(desk) == []  # two kinds of source, and the camera call covered the window
+
+
+def test_planned_investigation_runs_its_phases_then_validates():
+    import json as _json
+
+    from heist.case import load_case
+
+    reference = load(ROOT / MILESTONES["d4"].reference)
+    case = load_case("practice/case-01")
+    crime = _json.loads((case.path / "truth.json").read_text())["crime"]
+
+    class FakeLLM:
+        def json(self, prompt, schema, system=None):
+            return {"culprit": crime["culprit"]["native_id"], "accomplice": crime["accomplice"]["native_id"],
+                    "method": crime["method"],
+                    "evidence": ["the camera log shows the cameras went dark", "the keycard log puts the accomplice in the office",
+                                 "phone records show their calls"]}  # fmt: skip
+
+    desk = reference.investigate(case, FakeLLM())
+    tools = [a.tool for a in desk.log]
+    assert tools[:2] == ["floor_plan", "list_people"] and tools[-1] == "accuse"
+    assert desk.verdict()["solved"]
