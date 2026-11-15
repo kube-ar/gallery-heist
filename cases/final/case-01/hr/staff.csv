@@ -1,15 +1,15 @@
 employee_id,full_name,role,department,phone,hired
-E-1058,Kalinda Maddox,Security Guard,Security,+44 7700 900243,2018-05-08
-E-1119,Anders Okafor,Security Guard,Security,+44 7700 900618,2023-06-19
-E-1151,Aurelio Balogun,Curator,Collections,+44 7700 900735,2023-12-21
-E-1318,Alba Lowell,Registrar,Collections,+44 7700 900598,2020-04-18
-E-1477,Leila Winterbourne,Director,Directorate,+44 7700 900578,2021-01-26
-E-1499,Edda Brandt,Security Guard,Security,+44 7700 900201,2024-11-04
-E-1592,Ximena Calloway,Education Officer,Learning,+44 7700 900460,2021-01-15
-E-1593,Zofia Ekwueme,Security Guard,Security,+44 7700 900619,2019-11-04
-E-1636,Kasimir Aldana,Conservator,Collections,+44 7700 900106,2024-03-14
-E-1642,Rhea Whitlock,Curator,Collections,+44 7700 900704,2018-01-03
-E-1659,Dmitri Castellano,Facilities Technician,Operations,+44 7700 900193,2024-04-08
-E-1778,Viggo Radcliffe,Events Manager,Operations,+44 7700 900543,2023-01-15
-E-1867,Camille Barros,Security Guard,Security,+44 7700 900778,2015-03-13
-E-1899,Quentin Thorne,Head of Security,Security,+44 7700 900425,2017-08-21
+E-1015,Uma Galloway,Director,Directorate,+44 7700 900559,2017-12-21
+E-1123,Valentin Lindgren,Conservator,Collections,+44 7700 900119,2017-11-09
+E-1262,Naveen Vos,Security Guard,Security,+44 7700 900667,2014-10-08
+E-1293,Lucía Lombardi,Education Officer,Learning,+44 7700 900323,2024-05-08
+E-1301,Arjun Holt,Security Guard,Security,+44 7700 900284,2015-05-10
+E-1496,Imani Karimi,Curator,Collections,+44 7700 900750,2015-10-26
+E-1600,Rafa Strand,Registrar,Collections,+44 7700 900176,2021-04-16
+E-1674,Greta Ferreira,Head of Security,Security,+44 7700 900909,2018-09-21
+E-1792,Mila Aldana,Facilities Technician,Operations,+44 7700 900357,2016-06-17
+E-1835,Ines Whitlock,Events Manager,Operations,+44 7700 900532,2016-12-04
+E-1842,Amara Schofield,Security Guard,Security,+44 7700 900868,2019-01-10
+E-1900,Omar Pellegrini,Curator,Collections,+44 7700 900912,2016-09-14
+E-1910,Mei Achterberg,Security Guard,Security,+44 7700 900060,2019-08-06
+E-1950,Sora Kowalczyk,Security Guard,Security,+44 7700 900790,2016-08-12

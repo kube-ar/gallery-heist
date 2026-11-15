@@ -1,6 +1,7 @@
 """The simulator must produce nights that make sense, and the same night for the same seed."""
 
 import filecmp
+import os
 from collections import defaultdict
 
 import pytest
@@ -70,6 +71,10 @@ def test_same_seed_same_night():
 @pytest.mark.parametrize("pack", sorted(PACKS))
 def test_shipped_packs_are_reproducible(pack, tmp_path):
     level, methods, first_seed, hidden = PACKS[pack]
+    if first_seed is None:
+        if not os.environ.get("HEIST_FINAL_SEED"):
+            pytest.skip("the final pack's seed is a maintainers' secret (HEIST_FINAL_SEED)")
+        first_seed = int(os.environ["HEIST_FINAL_SEED"])
     build_case(first_seed, level, tmp_path / "case-01", "case-01", pack, hide_truth=hidden, method=methods[0])
     shipped = CASES / pack / "case-01"
     cmp = filecmp.dircmp(shipped, tmp_path / "case-01")

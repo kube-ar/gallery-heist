@@ -164,7 +164,7 @@ def export(world: World, folder: Path, case_id: str, pack: str, hide_truth: bool
     meta = {
         "id": case_id,
         "pack": pack,
-        "seed": world.seed,
+        "seed": None if hide_truth else world.seed,
         "level": world.level,
         "generator_version": GENERATOR_VERSION,
         "venue": world.venue_name,

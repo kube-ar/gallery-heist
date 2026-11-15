@@ -1,34 +1,34 @@
 {
   "id": "case-01",
   "pack": "final",
-  "seed": 901,
+  "seed": null,
   "level": "final",
   "generator_version": 2,
-  "venue": "the Belvaro House Museum",
-  "date": "2026-06-26",
+  "venue": "the Quillfield Museum",
+  "date": "2026-06-25",
   "artwork": {
-    "title": "The Clockmaker's Bench",
-    "artist": "Elsa Marrow",
-    "year": 1919
+    "title": "Girl Reading by a Stove",
+    "artist": "Mirela Danescu",
+    "year": 1931
   },
   "room": {
-    "id": "R21",
-    "name": "Glass Room",
+    "id": "R22",
+    "name": "Print Room",
     "wing": "west"
   },
-  "last_seen": "2026-06-26T22:37",
-  "discovered": "2026-06-26T23:45",
+  "last_seen": "2026-06-25T22:32",
+  "discovered": "2026-06-25T23:45",
   "questions": {
     "who_was_in": [
       {
         "wing": "west",
-        "start": "22:37",
+        "start": "22:32",
         "end": "23:45"
       },
       {
         "wing": "east",
-        "start": "22:00",
-        "end": "22:30"
+        "start": "21:00",
+        "end": "21:30"
       },
       {
         "wing": "service",
@@ -38,16 +38,16 @@
     ],
     "connection": [
       {
-        "a": "C-519",
-        "b": "C-585"
+        "a": "C-724",
+        "b": "G-901"
       },
       {
-        "a": "G-769",
-        "b": "G-778"
+        "a": "E-1600",
+        "b": "G-803"
       },
       {
-        "a": "E-1119",
-        "b": "E-1477"
+        "a": "E-1496",
+        "b": "G-518"
       }
     ]
   }

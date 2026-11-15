@@ -41,6 +41,20 @@ uv run heist show practice/case-01  # a case's briefing
 Python 3.12 or newer. Milestones 1 and 2 need no API key and no database. The first run downloads a
 small embedding model (about 30 MB), so it needs the network once.
 
+### An LLM, from milestone 3 on
+
+Milestones 3 and later call a language model. Use whichever provider you have a key for:
+Claude (`anthropic`), OpenAI, Fireworks or OpenRouter.
+
+```sh
+cp .env.example .env     # then set HEIST_LLM_PROVIDER, HEIST_LLM_MODEL and that provider's key
+uv run heist llm         # checks the setup with two tiny calls
+```
+
+`.env` is gitignored: never commit a key. In your code, `from heist.llm import get_llm` gives
+you `llm.text(prompt)` and `llm.json(prompt, schema)` on whichever provider `.env` names, so your
+solution works for anyone who clones it with a different provider.
+
 ## How a milestone works
 
 1. Finish the chapter on the site and open its milestone page.
@@ -72,15 +86,14 @@ and come back to go deeper whenever you're curious.
 | `easy` | 4 | A few more people, the same kind of theft |
 | `medium` | 4 | A bigger cast, money going around in loops, and in some cases a borrowed badge that makes the keycard log name the wrong person |
 | `hard` | 4 | A fire door that logs nothing, and loops in the money that mean nothing at all |
-| `final` | 3 | All of it. The answers are hashed, so you can't read them by accident |
+| `final` | 3 | All of it, from a seed the code doesn't contain. The answers are hashed so you can't read them by accident (a hash stops accidents, not a determined cheat) |
 
 Each case folder holds one export per system (`hr/`, `events/`, `vendors/`, `security/`,
 `facilities/`, `telecom/`, `finance/`), the front desk's handwritten sign-in sheet (`frontdesk/`),
 the statements, emails and reports written after the theft (`documents/`), a briefing (`case.md`)
 and `case.json` with the questions the checks ask. `truth.json` is what really happened: the checks read it, you shouldn't.
 
-Want more? `uv run heist generate --seed 7 --level hard` builds a new case in `cases/mine/` (the
-final pack's seeds are refused, so its answers stay hidden).
+Want more? `uv run heist generate --seed 7 --level hard` builds a new case in `cases/mine/`.
 
 ## License
 

@@ -6,12 +6,12 @@ R03,Grand Atrium,central,true
 R04,Dining Hall,central,true
 R05,Terrace,central,true
 R10,East Corridor,east,false
-R11,Portrait Gallery,east,false
-R12,Tapestry Hall,east,false
+R11,Miniatures Room,east,false
+R12,Map Room,east,false
 R13,Restoration Lab,east,false
 R20,West Corridor,west,false
-R21,Glass Room,west,false
-R22,Lantern Gallery,west,false
+R21,Sculpture Hall,west,false
+R22,Print Room,west,false
 R23,Archive,west,false
 R30,Service Corridor,service,false
 R31,Kitchen,service,false
