@@ -394,3 +394,83 @@ def test_d5_fails_a_detective_that_never_calls_the_model(monkeypatch):
     r = d5.Result("agent", None)
     d5._agent(idle, r)
     assert r.started and not r.passed
+
+
+def test_d4_fails_an_accusation_the_chief_refuses(monkeypatch):
+    """The plan milestone is about checking an accusation before the chief sees it: a refused warrant fails it."""
+    from heist.checks import d4
+    from heist.precinct import Precinct
+
+    monkeypatch.setenv("HEIST_LLM_PROVIDER", "anthropic")  # configured, but never called below
+
+    def investigate(case, llm, named=False):
+        desk = Precinct(case)
+        desk.call("camera_log", {"start": "21:00", "end": "23:45"})
+        desk.call("keycard_log", {"room": "R34", "start": "22:00", "end": "22:30"})
+        culprit = AccusingLLM(case).crime["culprit"]["native_id"]
+        evidence = ["the camera log shows the cameras went dark", "the keycard log puts them in the office"]
+        desk.call("accuse", {"culprit": f"The registrar ({culprit})" if named else culprit, "accomplice": "",
+                             "method": "insider", "evidence": evidence})  # fmt: skip
+        return desk
+
+    r = d4.Result("agent", None)
+    d4._agent(types.SimpleNamespace(investigate=lambda case, llm: investigate(case, llm, named=True)), r)
+    assert not r.passed and "0 warrants" in r.score and any("refused" in d for d in r.details)
+    r = d4.Result("agent", None)
+    d4._agent(types.SimpleNamespace(investigate=investigate), r)
+    assert r.passed and "3 warrants" in r.score
+
+
+def test_d4_reference_gathers_enough_to_solve_every_pack():
+    """The reference's plan finds the ring on every case of every pack, with no model: the accomplice in the
+    office when the cameras went dark, the culprit on the calls before and after, and facts that agree with
+    the true accusation. Inside the budget, with no failed call."""
+    from heist.case import list_cases, load_case
+    from heist.precinct import Precinct
+
+    reference = load(ROOT / MILESTONES["d4"].reference)
+    for pack in ("practice", "easy", "medium", "hard"):
+        for name in list_cases(pack):
+            case = load_case(name)
+            crime = AccusingLLM(case).crime
+            culprit, accomplice = crime["culprit"]["native_id"], crime["accomplice"]["native_id"]
+            desk, notes = Precinct(case), {}
+            for phase in reference.phases(reference.plan(case)):
+                for step in phase:
+                    if step in reference.STEPS:
+                        reference.STEPS[step](desk, case, notes)
+            assert accomplice in notes["office"], name
+            assert any({c["from"], c["to"]} == {culprit, accomplice} for c in notes["calls"]), name
+            truth = {"culprit": culprit, "accomplice": accomplice, "method": crime["method"]}
+            assert reference.contradictions(desk, notes, truth) == [], name
+            assert desk.spent <= desk.budget and all(a.ok for a in desk.log), name
+            assert reference.investigate(case, AccusingLLM(case)).verdict()["solved"], name
+
+
+def test_d4_reference_repairs_and_catches_what_code_can_see():
+    from heist.case import load_case
+    from heist.precinct import Precinct
+
+    reference = load(ROOT / MILESTONES["d4"].reference)
+    case = load_case("hard/case-02")
+    crime = AccusingLLM(case).crime
+    culprit, accomplice = crime["culprit"]["native_id"], crime["accomplice"]["native_id"]
+    victim = crime["badge_victim"]["native_id"]
+    desk = Precinct(case)
+    notes = {}
+    for phase in reference.phases(reference.plan(case)):
+        for step in phase:
+            if step in reference.STEPS:
+                reference.STEPS[step](desk, case, notes)
+    # an id with a name around it is cut back to the id; a line citing the bank, never asked, is dropped
+    acc = {"culprit": f"Someone ({culprit})", "accomplice": accomplice, "method": "borrowed_badge",
+           "evidence": ["the camera log shows the outage", "phone records show the calls", "a bank transfer"]}  # fmt: skip
+    fixed = reference.repaired(desk, acc)
+    assert fixed["culprit"] == culprit and len(fixed["evidence"]) == 2
+    assert reference.validate_accusation(desk, fixed) == [] and reference.contradictions(desk, notes, fixed) == []
+    # the badge's holder accused of borrowing their own badge, and the guard in the office accused of the theft
+    assert reference.contradictions(desk, notes, {**fixed, "culprit": victim})
+    assert reference.contradictions(desk, notes, {**fixed, "culprit": accomplice, "accomplice": culprit})
+    assert reference.contradictions(desk, notes, {**fixed, "method": "fire_door"})
+    schema = reference.accusation_schema(desk)
+    assert culprit in schema["properties"]["culprit"]["enum"] and "" in schema["properties"]["accomplice"]["enum"]
