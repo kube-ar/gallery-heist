@@ -188,6 +188,7 @@ def test_rookie_loop_stops_at_the_accusation():
     assert reference.failures(desk) == []  # two kinds of source, and the camera call covered the window
 
 
+@pytest.mark.skipif(not neo4j_up(), reason="needs Neo4j: docker compose up -d")
 def test_planned_investigation_runs_its_phases_then_validates():
     import json as _json
 
@@ -207,7 +208,7 @@ def test_planned_investigation_runs_its_phases_then_validates():
     desk = reference.investigate(case, FakeLLM())
     tools = [a.tool for a in desk.log]
     # the first phase (cameras, place, room) runs together, before anything that needs it
-    assert set(tools[:4]) == {"camera_log", "floor_plan", "list_people", "keycard_log"} and tools[-1] == "accuse"
+    assert set(tools[:4]) == {"camera_log", "floor_plan", "list_people", "board"} and tools[-1] == "accuse"
     assert desk.verdict()["solved"]
 
 
@@ -398,10 +399,12 @@ def test_d5_fails_a_detective_that_never_calls_the_model(monkeypatch):
 
 def test_d4_fails_an_accusation_the_chief_refuses(monkeypatch):
     """The plan milestone is about checking an accusation before the chief sees it: a refused warrant fails it."""
+    from heist import board
     from heist.checks import d4
     from heist.precinct import Precinct
 
     monkeypatch.setenv("HEIST_LLM_PROVIDER", "anthropic")  # configured, but never called below
+    monkeypatch.setattr(board, "reachable", lambda: None)  # this detective never asks the board
 
     def investigate(case, llm, named=False):
         desk = Precinct(case)
@@ -421,6 +424,7 @@ def test_d4_fails_an_accusation_the_chief_refuses(monkeypatch):
     assert r.passed and "3 warrants" in r.score
 
 
+@pytest.mark.skipif(not neo4j_up(), reason="needs Neo4j: docker compose up -d")
 def test_d4_reference_gathers_enough_to_solve_every_pack():
     """The reference's plan finds the ring on every case of every pack, with no model: the accomplice in the
     office when the cameras went dark, the culprit on the calls before and after, and facts that agree with
@@ -447,6 +451,7 @@ def test_d4_reference_gathers_enough_to_solve_every_pack():
             assert reference.investigate(case, AccusingLLM(case)).verdict()["solved"], name
 
 
+@pytest.mark.skipif(not neo4j_up(), reason="needs Neo4j: docker compose up -d")
 def test_d4_reference_repairs_and_catches_what_code_can_see():
     from heist.case import load_case
     from heist.precinct import Precinct
@@ -474,3 +479,40 @@ def test_d4_reference_repairs_and_catches_what_code_can_see():
     assert reference.contradictions(desk, notes, {**fixed, "method": "fire_door"})
     schema = reference.accusation_schema(desk)
     assert culprit in schema["properties"]["culprit"]["enum"] and "" in schema["properties"]["accomplice"]["enum"]
+
+
+def test_the_board_is_read_only_and_bounded():
+    """What a model writes for the board is checked before it runs: no Neo4j needed for that."""
+    from heist.board import problem, sources
+
+    ok = "MATCH (s:Swipe)-[:BY]->(b:Badge) RETURN b.id LIMIT 10"
+    assert problem(ok, 60) is None and sources(ok) == {"keycard"}
+    assert "read-only" in problem("MATCH (n) DETACH DELETE n RETURN 1 LIMIT 1", 60)
+    assert "LIMIT" in problem("MATCH (p:Person) RETURN p", 60)
+    assert "LIMIT" in problem("MATCH (p:Person) RETURN p LIMIT 500", 60)
+    assert "Chunk" in problem("MATCH (c:Chunk) RETURN c.text LIMIT 5", 60)  # statements come from interviews
+    assert problem("MATCH (p:Person {name: 'DELETE me'}) RETURN p.id LIMIT 1", 60) is None  # a literal isn't a clause
+    assert sources("MATCH (c:Call)-[:FROM]->(:Phone) MATCH (t:Transfer) RETURN c LIMIT 1") == {"phone", "bank"}
+
+
+def test_the_chief_counts_what_a_board_query_read(monkeypatch):
+    from heist import board
+    from heist.case import load_case
+    from heist.precinct import Precinct
+
+    monkeypatch.setattr(board, "run", lambda case, query, params, max_rows: [{"id": "E-1"}])
+    desk = Precinct(load_case("practice/case-01"))
+    desk.call("board", {"query": "MATCH (c:Call)-[:FROM]->(p:Phone) RETURN p.number LIMIT 5"})
+    desk.call("board", {"query": "MATCH (p:Person) RETURN p.id LIMIT 5"})
+    assert desk.consulted() == {"phone"} and desk.spent == 2 * desk.COSTS["board"]
+    assert "board" not in {t["name"] for t in desk.tools()} and "board" in {t["name"] for t in desk.tools(board=True)}
+
+
+def test_d4_needs_a_plan_that_asks_the_board():
+    from heist.checks import d4
+
+    ref = load(ROOT / MILESTONES["d4"].reference)
+    no_graph = [dict(s, tools=["keycard_log"] if s["tools"] == ["board"] else s["tools"]) for s in ref.plan(None)]
+    r = d4.Result("plan", None)
+    d4._plan(_copy(ref, plan=lambda case: no_graph), r)
+    assert not r.passed and any("evidence board" in d for d in r.details)

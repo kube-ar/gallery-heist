@@ -28,18 +28,20 @@ on the site, next to the lessons they use. This repo holds the code, the cases a
 Then the detective (the [Agentic GraphRAG](https://kube.ar/agentic-graphrag) course): an agent
 that doesn't get the files. It works the case at the precinct's desk (`heist.precinct`), where
 every record, log and interview costs minutes from the night's budget, and asks the chief for a
-warrant when it's sure. This part needs no GraphRAG code and no Neo4j: you can start here.
+warrant when it's sure. This part needs no GraphRAG code: you can start here. The planned agents (d4, d8) ask the evidence board, the
+GraphRAG part's graph, through the desk's `board` tool; the desk loads it with the course's own
+solutions, and it needs Neo4j.
 
 | # | Milestone | Course chapter | Needs |
 |---|---|---|---|
 | d1 | [The rookie](https://kube.ar/agentic-graphrag/project/gallery-heist/the-rookie): a baseline agent, and its failures named | Agentic GraphRAG · Overview | a model (one check) |
 | d2 | [The rulebook](https://kube.ar/agentic-graphrag/project/gallery-heist/the-rulebook): rules in the graph, one `describe` for every record, a distraction | What the agent knows | a model (one check) |
 | d3 | [The notebook](https://kube.ar/agentic-graphrag/project/gallery-heist/the-notebook): a memory with two times, observed vs claimed | Agent memory | a model (one check) |
-| d4 | [The investigation plan](https://kube.ar/agentic-graphrag/project/gallery-heist/the-investigation-plan): a workflow graph, phases, meaning checks | How the agent acts | a model (one check) |
+| d4 | [The investigation plan](https://kube.ar/agentic-graphrag/project/gallery-heist/the-investigation-plan): a workflow graph, phases, meaning checks | How the agent acts | Neo4j, and a model (one check) |
 | d5 | [The precinct](https://kube.ar/agentic-graphrag/project/gallery-heist/the-precinct): 59 tools, retrieval, chaining by type, a planted instruction | Agent tools | a model (one check) |
 | d6 | [Case review](https://kube.ar/agentic-graphrag/project/gallery-heist/case-review): execution graph, diagnosis, safe shipping | Evaluation and self-improvement | Python only |
 | d7 | [Budget and clearance](https://kube.ar/agentic-graphrag/project/gallery-heist/budget-and-clearance): routing, cost per solved case, access, audit, erasure | Running in production | Python only |
-| d8 | [The hard case](https://kube.ar/agentic-graphrag/project/gallery-heist/the-hard-case): your best detective on the hard pack, and an ablation | Putting it together | a model (one check) |
+| d8 | [The hard case](https://kube.ar/agentic-graphrag/project/gallery-heist/the-hard-case): your best detective on the hard pack, and an ablation | Putting it together | Neo4j, and a model (one check) |
 
 "A model (one check)" means one check calls your model and the others are plain Python: you can
 build and check those first, without a key (`--no-llm`, below).
@@ -89,7 +91,7 @@ One-shot answers (`llm.text`, `llm.json`) are cached in `.heist-cache/llm`,
 so asking the same prompt again is free; set `HEIST_LLM_CACHE=0` to always call the provider.
 Conversations aren't cached: an agent check pays for its runs every time.
 
-### Neo4j, for milestone 4
+### Neo4j, for milestone 4 and the planned agents (d4, d8)
 
 ```sh
 docker compose up -d     # starts Neo4j with the password in .env (default heist-password)

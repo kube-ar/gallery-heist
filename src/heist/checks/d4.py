@@ -14,7 +14,7 @@ L_WORKFLOW = ("agentic-graphrag", "agent-workflow-graph", "Agent workflow graphs
 L_OUTPUT = ("agentic-graphrag", "structured-output", "Structured output for agents")
 L_PLANNING = ("agentic-graphrag", "agent-planning", "Agent planning")
 DESK_TOOLS = {"briefing", "rulebook", "list_people", "floor_plan", "documents", "read_document", "keycard_log",
-              "camera_log", "phone_records", "bank_records", "interview", "accuse"}  # fmt: skip
+              "camera_log", "phone_records", "bank_records", "interview", "board", "accuse"}  # fmt: skip
 
 
 def official_phases(steps):
@@ -82,6 +82,9 @@ def _plan(module, r: Result) -> None:
             problems.append(f"{s['id']}: {len(tools)} tools; keep execution nodes narrow (two at most)")
         if set(tools) - DESK_TOOLS:
             problems.append(f"{s['id']}: unknown tools {sorted(set(tools) - DESK_TOOLS)}")
+    if not any(s.get("kind") == "execution" and "board" in s.get("tools", []) for s in steps):
+        problems.append("no execution step asks the evidence board: who was where, and who called whom, are "
+                        "questions for the graph (the board tool)")  # fmt: skip
     for p in problems:
         r.fail(p)
     r.score = f"{len(steps)} steps, {len(problems)} problems"
@@ -177,6 +180,13 @@ def _meaning(module, r: Result) -> None:
 def _agent(module, r: Result) -> None:
     llm = model_for(r)
     if llm is None:
+        return
+    from ..board import reachable
+
+    trouble = reachable()
+    if trouble:
+        r.started = r.passed = False
+        r.notes.append(trouble)
         return
     try:
         accused = warrants = solved = calls = 0
