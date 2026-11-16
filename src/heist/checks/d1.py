@@ -11,6 +11,9 @@ from .core import NotStarted, Result, attempt, model_for, tally
 
 L_WHAT = ("agentic-graphrag", "what-is-agentic-graphrag", "What is agentic GraphRAG?")
 L_GRAPHS = ("agentic-graphrag", "knowledge-graph-and-workflow-graph", "Knowledge graph and workflow graph")
+# One hard case in the baseline: someone else's badge opens the room. The practice cases are built to be
+# readable, and a capable model can solve all three; this one is built to mislead (d8 runs the whole pack).
+HARD = "hard/case-02"
 
 
 def _runs() -> dict[str, tuple[Precinct, list[str]]]:
@@ -102,7 +105,7 @@ def _works(module, r: Result) -> None:
     if llm is None:
         return
     accused = warrants = solved = 0
-    names = list_cases("practice")
+    names = [*list_cases("practice"), HARD]
     try:
         for name in names:
             desk = attempt(r, module.investigate, load_case(name), llm)
@@ -122,7 +125,7 @@ def _works(module, r: Result) -> None:
     r.score = f"{accused}/{len(names)} accused, {warrants} warrants, {solved} solved"
     if accused < len(names):
         r.fail(
-            "The rookie has to reach an accusation on every practice case (it may be wrong). If it runs out of "
+            "The rookie has to reach an accusation on every case (it may be wrong). If it runs out of "
             "turns, give it more turns or a clearer task, but keep it naive."
         )
     r.notes.append(f"LLM: {llm.provider.name} {llm.model}, {llm.usage.calls} calls")

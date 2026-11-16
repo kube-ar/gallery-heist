@@ -35,6 +35,10 @@ def run(module: ModuleType) -> list[Result]:
     if llm is None:
         return [table, hard]
     try:
+        from ..board import reachable
+
+        if reachable():
+            hard.notes.append(f"{reachable()} A detective that asks the board gets errors until then.")
         accused = warrants = solved = 0
         names = list_cases("hard")
         for name in names:

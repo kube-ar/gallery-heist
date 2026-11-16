@@ -14,6 +14,10 @@ accuses, and the chief signs the warrant only if the evidence follows the rulebo
 
 Every call is recorded in `desk.log`: the raw material of an execution graph (d6).
 
+`board` asks the evidence board in Cypher: the graph GraphRAG milestone 4 builds, holding the records
+(heist.board). It's for planned detectives (d4, d8), and needs Neo4j. `desk.tools(board=True)` offers
+it to a model too; by default the tools are the logs, as a detective at a bare desk has them.
+
 The chief tells which sources an accusation cites by the words in its evidence (SOURCE_WORDS):
 name the source in each line ("the keycard log shows…", "phone records show…", "a bank
 transfer…"). `cited_sources(evidence)` reads them the same way.
@@ -128,9 +132,22 @@ class Precinct:
 
     COSTS = {"briefing": 0, "rulebook": 0, "list_people": 5, "floor_plan": 5, "documents": 5, "read_document": 5,
              "keycard_log": 15, "camera_log": 10, "phone_records": 20, "bank_records": 30, "interview": 20,
-             "accuse": 0}  # fmt: skip
+             "board": 15, "accuse": 0}  # fmt: skip
 
-    def tools(self) -> list[dict]:
+    def tools(self, board: bool = False) -> list[dict]:
+        """The desk's tools as JSON Schema descriptions. `board=True` adds the evidence board."""
+        tools = self._tools()
+        if board:
+            from .board import SCHEMA
+
+            tools.insert(-1, {"name": "board", "description": f"A read-only Cypher query over the evidence board, "
+                              f"the graph of the case's records. End it with LIMIT (at most {MAX_ROWS}). 15 minutes.\n"
+                              f"{SCHEMA}", "parameters": {"type": "object", "properties": {
+                                  "query": {"type": "string"}, "params": {"type": "object"}},
+                                  "required": ["query"], "additionalProperties": False}})  # fmt: skip
+        return tools
+
+    def _tools(self) -> list[dict]:
         time = {"type": "string", "description": "a time on the gala night, HH:MM (24-hour)"}
         person = {"type": "string", "description": "an employee, guest or contractor id (E-…, G-…, C-…)"}
         obj = lambda props, req: {"type": "object", "properties": props, "required": req, "additionalProperties": False}  # noqa: E731
@@ -343,6 +360,11 @@ class Precinct:
         )
         return {"witness": witness, "about": target, "sentence": sentence}
 
+    def _board(self, query: str, params: dict | None = None) -> list[dict] | dict:
+        from .board import run
+
+        return run(self.case, query, params, MAX_ROWS)
+
     def _accuse(self, culprit: str, accomplice: str, method: str, evidence: list[str]) -> dict:
         # Check the shape before recording anything: a malformed accusation goes back to the model as an
         # error and the investigation goes on, instead of a broken accusation that ends it.
@@ -357,7 +379,14 @@ class Precinct:
     # ── The chief ─────────────────────────────────────────────────────────────
 
     def consulted(self) -> set[str]:
-        return {TOOL_SOURCE[a.tool] for a in self.log if a.ok and a.tool in TOOL_SOURCE}
+        """The kinds of source the desk returned: by tool, and for the board, by what each query read."""
+        from .board import sources
+
+        found = {TOOL_SOURCE[a.tool] for a in self.log if a.ok and a.tool in TOOL_SOURCE}
+        for a in self.log:
+            if a.ok and a.tool == "board":
+                found |= sources(a.arguments.get("query", ""))
+        return found
 
     def verdict(self) -> dict:
         """The chief's decision on the accusation, and (on labeled cases) whether it was right."""

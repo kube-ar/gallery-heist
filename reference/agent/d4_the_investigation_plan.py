@@ -1,6 +1,9 @@
 """Detective 4 · The investigation plan: a reference solution. Spoilers: `heist use-reference d4`.
 
-The plan does the legwork in code, step by step, and turns what it found into a short list of facts.
+The plan does the legwork in code, step by step, and turns what it found into a short list of facts. Its
+questions about who was where, and who called whom, go to the evidence board: Cypher over the graph of the
+records that GraphRAG milestone 4 builds (heist.board, which needs Neo4j). The cameras and the statements
+come from the desk's own tools.
 The model makes one decision: who, with whom, and how. Its answer can only name people on the lists
 (an enum in the schema), its meaning is checked before the chief sees it, and what code can fix,
 code fixes. Then the plan checks the answer against the facts it gathered, and sends the model back once
@@ -9,7 +12,7 @@ with what disagrees. The fewer things the model has to get right, the less a sma
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
 from heist.case import Case
@@ -33,9 +36,9 @@ def plan(case: Case) -> list[dict]:
         {"id": "frame", "kind": "reasoning", "tools": [], "needs": []},
         {"id": "place", "kind": "execution", "tools": ["floor_plan", "list_people"], "needs": ["frame"]},
         {"id": "cameras", "kind": "execution", "tools": ["camera_log"], "needs": ["frame"]},
-        {"id": "room", "kind": "execution", "tools": ["keycard_log"], "needs": ["frame"]},
-        {"id": "office", "kind": "execution", "tools": ["keycard_log"], "needs": ["cameras"]},
-        {"id": "calls", "kind": "execution", "tools": ["phone_records"], "needs": ["office"]},
+        {"id": "room", "kind": "execution", "tools": ["board"], "needs": ["frame"]},
+        {"id": "office", "kind": "execution", "tools": ["board"], "needs": ["cameras"]},
+        {"id": "calls", "kind": "execution", "tools": ["board"], "needs": ["office"]},
         {"id": "story", "kind": "execution", "tools": ["interview"], "needs": ["calls"]},
         {"id": "decide", "kind": "decision", "tools": [], "needs": ["place", "room", "calls", "story"]},
         {"id": "check", "kind": "validation", "tools": [], "needs": ["decide"]},
@@ -127,51 +130,69 @@ def _cameras(desk: Precinct, case: Case, notes: dict) -> None:
     notes["blips"] = [f"{t}: {', '.join(e['camera'] for e in es)}" for t, es in offline.items() if t != dark]
 
 
+# The questions about who was where, and who called whom, go to the evidence board: the graph of the records
+# that GraphRAG milestone 4 builds. One Cypher query replaces a keycard query per badge or phone records per person.
+
+ROOM_SWIPES = """
+MATCH (s:Swipe)-[:INTO]->(:Room {id: $room}), (s)-[:BY]->(b:Badge), (s)-[:AT]->(d:Door)
+WHERE localdatetime($seen) <= s.at < localdatetime($found)
+OPTIONAL MATCH (p:Person)-[:HOLDS]->(b)
+RETURN s.at AS time, b.id AS badge, p.id AS holder, d.id AS door, s.granted AS granted ORDER BY time LIMIT 60"""
+
+IN_THE_OFFICE = """
+MATCH (s:Swipe {granted: true})-[:BY]->(b:Badge)<-[:HOLDS]-(p:Person)
+WHERE s.at < localdatetime($dark)
+WITH p, s ORDER BY s.at DESC
+WITH p, collect(s)[0] AS last
+MATCH (last)-[:INTO]->(:Room {id: $office})
+RETURN p.id AS id, last.at AS since ORDER BY since LIMIT 60"""
+
+CALLS_AROUND = """
+MATCH (p:Person)-[:HAS_PHONE]->(mine:Phone), (c:Call)-[:FROM]->(a:Phone), (c)-[:TO]->(z:Phone)
+WHERE p.id IN $people AND (a = mine OR z = mine) AND localdatetime($lo) <= c.at <= localdatetime($hi)
+OPTIONAL MATCH (fa:Person)-[:HAS_PHONE]->(a)
+OPTIONAL MATCH (fz:Person)-[:HAS_PHONE]->(z)
+RETURN DISTINCT c.at AS time, coalesce(fa.id, a.number) AS caller, coalesce(fz.id, z.number) AS callee,
+       c.seconds AS seconds ORDER BY time LIMIT 60"""
+
+
+def _iso(case: Case, hhmm: str) -> str:
+    return case.at(hhmm).isoformat(timespec="minutes")
+
+
 def _room(desk: Precinct, case: Case, notes: dict) -> None:
-    rows = desk.call("keycard_log", {"room": notes["room"], "start": notes["seen"], "end": notes["found"]})
-    notes["room_swipes"] = rows if isinstance(rows, list) else []
+    """Every badge that opened the painting's room between the last round and the alarm, from the board."""
+    rows = desk.call("board", {"query": ROOM_SWIPES, "params": {
+        "room": notes["room"], "seen": _iso(case, notes["seen"]), "found": _iso(case, notes["found"])}})  # fmt: skip
+    notes["room_swipes"] = [{"time": r["time"][11:], "badge": r["badge"], "holder": r["holder"], "door": r["door"],
+                             "to_room": notes["room"], "result": "granted" if r["granted"] else "denied"}
+                            for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []  # fmt: skip
 
 
 def _office(desk: Precinct, case: Case, notes: dict) -> None:
-    """Who was in the Security Office when the cameras went dark: a badge that went in during the two hours
-    before, and didn't open another door between its last entry and the outage."""
+    """Who was in the Security Office when the cameras went dark: the people whose last swipe before the
+    outage took them into it. A question about time, answered by the graph in one query."""
     notes["office"], notes["office_since"] = [], {}
     if not notes.get("outage"):
         return
-    dark = case.at(notes["outage"]["dark"])
-    rows = desk.call("keycard_log", {"room": OFFICE, "start": f"{dark - timedelta(hours=2):%H:%M}",
-                                     "end": f"{dark:%H:%M}"})  # fmt: skip
-    last: dict[str, dict] = {}
+    rows = desk.call("board", {"query": IN_THE_OFFICE, "params": {
+        "dark": _iso(case, notes["outage"]["dark"]), "office": OFFICE}})  # fmt: skip
     for r in rows if isinstance(rows, list) else []:
-        if r.get("holder") and r["result"] == "granted":
-            last[r["badge"]] = r  # rows come in time order: the last one is the latest entry
-    for badge, r in sorted(last.items(), key=lambda kv: kv[1]["time"]):
-        after = f"{case.at(r['time']) + timedelta(minutes=1):%H:%M}"
-        moves = desk.call("keycard_log", {"badge": badge, "start": after, "end": f"{dark:%H:%M}"})
-        if moves == []:
-            notes["office"].append(r["holder"])
-            notes["office_since"][r["holder"]] = r["time"]
+        notes["office"].append(r["id"])
+        notes["office_since"][r["id"]] = r["since"][11:]
 
 
 def _calls(desk: Precinct, case: Case, notes: dict) -> None:
-    """Everyone who was in the office: their calls around the outage, and who was on the other end."""
+    """The calls around the outage that someone in the office made or took, and who was on the other end."""
     notes["calls"] = []
-    if not notes.get("outage"):
+    if not notes.get("outage") or not notes["office"]:
         return
     lo = case.at(notes["outage"]["dark"]) - NEAR
     hi = case.at(notes["outage"]["back"]) + NEAR
-    seen = set()
-    for person in notes["office"]:
-        if desk.remaining < desk.COSTS["phone_records"] + 2 * desk.COSTS["interview"]:
-            break  # keep time to hear the story
-        for c in desk.call("phone_records", {"person": person}) or []:
-            when = datetime.fromisoformat(c["start"]) if isinstance(c, dict) else None
-            key = (c["start"], c["from"], c["to"]) if when else None
-            if when and lo <= when <= hi and key not in seen:
-                seen.add(key)
-                notes["calls"].append(
-                    {"time": c["start"][11:], "from": c["from"], "to": c["to"], "seconds": c["seconds"]}
-                )
+    rows = desk.call("board", {"query": CALLS_AROUND, "params": {
+        "people": notes["office"], "lo": lo.isoformat(timespec="minutes"), "hi": hi.isoformat(timespec="minutes")}})  # fmt: skip
+    for r in rows if isinstance(rows, list) else []:
+        notes["calls"].append({"time": r["time"][11:], "from": r["caller"], "to": r["callee"], "seconds": r["seconds"]})
 
 
 def _story(desk: Precinct, case: Case, notes: dict) -> None:
