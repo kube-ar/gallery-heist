@@ -35,15 +35,17 @@ def run(module: ModuleType) -> list[Result]:
     if llm is None:
         return [table, hard]
     try:
-        accused = solved = 0
+        accused = warrants = solved = 0
         names = list_cases("hard")
         for name in names:
             desk = attempt(hard, module.investigate, load_case(name), llm)
             if desk is None:
                 continue
+            verdict = desk.verdict()
             accused += desk.accusation is not None
-            solved += desk.verdict()["solved"]
-        hard.score = f"{accused}/{len(names)} accused, {solved} solved"
+            warrants += verdict["warrant"]
+            solved += verdict["solved"]
+        hard.score = f"{accused}/{len(names)} accused, {warrants} warrants, {solved} solved"
         if accused < len(names):
             hard.fail("Every hard case must end in an accusation.")
     except NotStarted:

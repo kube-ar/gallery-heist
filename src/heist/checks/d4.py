@@ -179,17 +179,29 @@ def _agent(module, r: Result) -> None:
     if llm is None:
         return
     try:
-        accused = solved = calls = 0
+        accused = warrants = solved = calls = 0
+        refused = []
         for name in list_cases("practice"):
             desk = attempt(r, module.investigate, load_case(name), llm)
             if desk is None:
                 continue
+            verdict = desk.verdict()
             accused += desk.accusation is not None
-            solved += desk.verdict()["solved"]
+            warrants += verdict["warrant"]
+            solved += verdict["solved"]
             calls += len(desk.log)
-        r.score = f"{accused}/3 accused, {solved} solved, {calls} desk calls"
+            if desk.accusation is not None and not verdict["warrant"]:
+                refused.append(f"{name}: the chief refused the warrant: {verdict['reason']}")
+        r.score = f"{accused}/3 accused, {warrants} warrants, {solved} solved, {calls} desk calls"
         if accused < 3:
             r.fail("Every practice run must end in an accusation.")
+        elif warrants < accused:
+            r.fail(
+                "An accusation reached the chief with a problem your checks are there to stop. Leave the model less "
+                "to get wrong: the people's ids as an enum in the schema, and in code, drop evidence that cites a "
+                "source you never consulted."
+            )
+            r.details.extend(refused)
     except NotStarted:
         return
     except LLMError as e:
