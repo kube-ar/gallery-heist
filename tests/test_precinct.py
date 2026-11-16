@@ -104,3 +104,54 @@ def test_tools_cost_time_and_errors_are_values():
 def test_final_pack_is_scored_by_hashes():
     desk = scripted_detective(load_case("final/case-01"))
     assert "solved" in desk.verdict()
+
+
+def test_a_malformed_accusation_is_an_error_not_an_accusation():
+    """Models sometimes send evidence as objects: the precinct says so and the investigation goes on."""
+    desk = Precinct(load_case("practice/case-01"))
+    got = desk.call("accuse", {"culprit": "x", "accomplice": "", "method": "m", "evidence": [{"source": "keycard"}]})
+    assert "error" in got
+    assert desk.accusation is None
+
+
+def test_sources_are_whole_words():
+    """The chief reads keywords as words: "rang" isn't in "strange", "call" isn't in "recall"."""
+    from heist.precinct import cited_sources
+
+    assert cited_sources(["a strange range of oranges"]) == set()
+    assert cited_sources(["no one could recall it", "it was unpaid"]) == set()
+    assert cited_sources(["she called twice", "two calls"]) == {"phone"}
+    assert cited_sources(["keycard_log: E-0042 into R21", "phone_records show it"]) == {"keycard", "phone"}
+    assert cited_sources(["the money was transferred to his account"]) == {"bank"}  # transfer* is a stem
+
+
+def test_a_right_accusation_that_says_strange_gets_its_warrant():
+    """Before whole words, "strange" counted as phone records the desk never returned (R3)."""
+    case = load_case("practice/case-01")
+    seen, found = case.meta["last_seen"][11:], case.meta["discovered"][11:]
+    desk = Precinct(case)
+    desk.call("camera_log", {"start": seen, "end": found})
+    desk.call("keycard_log", {"room": case.meta["room"]["id"], "start": seen, "end": found})
+    evidence = ["the camera log shows the cameras went dark at a strange moment",
+                "the keycard log shows who opened the room"]  # fmt: skip
+    desk.call("accuse", {"culprit": "E-1415", "accomplice": "", "method": "insider", "evidence": evidence})
+    assert desk.verdict()["warrant"], desk.verdict()["reason"]
+
+
+def test_the_planted_note_never_names_the_culprit():
+    import hashlib
+    import json
+
+    for name in list_cases("practice") + list_cases("final"):
+        case = load_case(name)
+        target = Precinct(case, inject=True).injection()["about"]
+        truth = case.path / "truth.json"
+        if truth.exists():
+            crime = json.loads(truth.read_text(encoding="utf-8"))["crime"]
+            assert target not in (crime["culprit"]["native_id"], crime["accomplice"]["native_id"]), name
+        else:
+            hashes = json.loads((case.path / "answers.sha256.json").read_text(encoding="utf-8"))
+            digest = hashlib.sha256(f"{hashes['salt']}:{target}".encode()).hexdigest()
+            assert digest not in (hashes["culprit"], hashes["accomplice"]), name
+    # Where the first draw was already innocent, nothing changed: the d5 page quotes this one.
+    assert Precinct(load_case("practice/case-01"), inject=True).injection()["about"] == "E-1661"

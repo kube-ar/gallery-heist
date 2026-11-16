@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
+from collections.abc import Callable
 from dataclasses import replace
 from types import ModuleType
 
-from rdflib import OWL, RDF, RDFS, Graph, Namespace
+from rdflib import OWL, RDF, RDFS, Dataset, Graph, Namespace
+from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 
 from .. import answers
 from ..case import Case, list_cases, load_case
@@ -15,6 +18,8 @@ from .core import NotStarted, Result, attempt, tally
 PACKS = ("practice", "easy", "medium", "hard")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 SHARED = ("https://schema.org/", "http://schema.org/", "http://xmlns.com/foaf/0.1/")
+SYSTEMS = ("hr", "events", "vendors", "security", "facilities", "telecom", "finance")  # the case folders
+DOORS = ("D07", "D13", "D20", "D25")
 
 L_ONTOLOGY = ("graphrag", "what-is-an-ontology", "What is an ontology?")
 L_ALIGN = ("graphrag", "ontology-alignment", "Ontology alignment")
@@ -32,6 +37,49 @@ def _union(ds) -> Graph:
             g.add((s, p, o))
         return g
     return ds
+
+
+def _system(name) -> str:
+    """The system a named graph is named after: the last part of its IRI (…/source/hr is hr)."""
+    return re.split(r"[/#:]", str(name).rstrip("/#"))[-1].lower()
+
+
+def _graph_names(ds) -> dict[str, int] | None:
+    """How many triples each named graph holds, by system name; None for a plain Graph."""
+    if not hasattr(ds, "quads"):
+        return None
+    out: dict[str, int] = {}
+    for _, _, _, g in ds.quads((None, None, None, None)):
+        name = getattr(g, "identifier", g)
+        if name is not None and name != DATASET_DEFAULT_GRAPH_ID:
+            out[_system(name)] = out.get(_system(name), 0) + 1
+    return out
+
+
+def _only(ds, keep: Callable[[str], bool]) -> Dataset:
+    """A copy of your dataset with only the named graphs whose system `keep` accepts (and its default graph)."""
+    out = Dataset(default_union=getattr(ds, "default_union", True))
+    for prefix, ns in ds.namespaces():
+        out.bind(prefix, ns, override=True, replace=True)
+    graphs: dict = {}
+    for s, p, o, g in ds.quads((None, None, None, None)):
+        name = getattr(g, "identifier", g)
+        if name is None or name == DATASET_DEFAULT_GRAPH_ID:
+            out.add((s, p, o))
+        elif keep(_system(name)):
+            if name not in graphs:
+                graphs[name] = out.graph(name)
+            graphs[name].add((s, p, o))
+    return out
+
+
+def _swipes(module, ds, door: str, start, end) -> list | None:
+    """Your swipes_at on some data, normalised; None if it fails (the competency check reports that)."""
+    try:
+        got = module.swipes_at(ds, door, start, end)
+        return sorted((t, str(b), bool(ok)) for t, b, ok in got)
+    except Exception:  # noqa: BLE001  NotImplementedError included
+        return None
 
 
 def _broken(case: Case) -> dict[str, Case]:
@@ -76,6 +124,7 @@ def run(module: ModuleType) -> list[Result]:
 
     if data is not None:
         _ontology(module, practice, data, onto)
+        _graphs(module, cases, practice, data, prov)
         _provenance(module, cases, data, prov)
         _competency(module, cases, data, cq)
         _shapes(module, practice, data, shapes)
@@ -98,6 +147,9 @@ def _ontology(module, practice, data, r: Result) -> None:
         g = _union(data[case.id])
         if g is None:
             continue
+        if not isinstance(g, Graph):
+            r.fail(f"to_rdf returned a {type(g).__name__}: it returns an rdflib Dataset")
+            break
         used_classes = set(g.objects(None, RDF.type))
         used_props = {p for p in g.predicates() if p != RDF.type}
         missing = sorted(str(x) for x in used_classes - classes) + sorted(str(x) for x in used_props - props)
@@ -123,6 +175,43 @@ def _ontology(module, practice, data, r: Result) -> None:
         r.fail("nothing is aligned to a shared vocabulary (schema.org or FOAF): map at least Person to one")
         r.lesson = L_ALIGN
     r.score = f"{len(classes)} classes, {len(props)} properties, {len(aligned)} alignments"
+
+
+def _graphs(module, cases, practice, data, r: Result) -> None:
+    """One named graph per source system, and the keycard log's swipes in `security`, nowhere else."""
+    for case in cases:
+        if data[case.id] is None:
+            continue
+        sizes = _graph_names(data[case.id])
+        if sizes is None:
+            r.fail(f"to_rdf returned a {type(data[case.id]).__name__} without named graphs: put each system's "
+                   f"facts in its own named graph ({', '.join(SYSTEMS)}), in an rdflib Dataset")  # fmt: skip
+            return
+        missing = [s for s in SYSTEMS if not sizes.get(s)]
+        if missing:
+            r.fail(f"{case.id}: no named graph holds the facts of {', '.join(missing)}: one graph per system, "
+                   f"named after its folder (…/hr, …/events…)")  # fmt: skip
+            return
+    # Where do the swipes live? Ask your own swipes_at, on the security graph alone and on everything else.
+    for case in practice:
+        ds = data[case.id]
+        if ds is None:
+            continue
+        start, end = case.at(case.meta["last_seen"][11:]), case.at(case.meta["discovered"][11:])
+        security, rest = _only(ds, lambda s: s == "security"), _only(ds, lambda s: s != "security")
+        for door in DOORS:
+            want = answers.swipes_at(case, door, start, end)
+            if not want or _swipes(module, ds, door, start, end) != want:
+                continue  # a wrong answer is the competency check's to report
+            if _swipes(module, security, door, start, end) != want:
+                r.fail(f"{case.id}: from the security graph alone, swipes_at({door!r}) doesn't find the swipes. The "
+                       "keycard log, its doors and its badges come from security/: their facts go in `security`.")  # fmt: skip
+                return
+            if _swipes(module, rest, door, start, end):
+                r.fail(
+                    f"{case.id}: graphs other than `security` hold swipes at {door}: each swipe goes in `security` only"
+                )
+                return
 
 
 def _provenance(module, cases, data, r: Result) -> None:
@@ -190,7 +279,15 @@ def _shapes(module, practice, data, r: Result) -> None:
     try:
         for case in practice:
             total += 1
-            conforms, _, text = validate(_union(data[case.id]), shacl_graph=shapes, inference="none")
+            clean = _union(data[case.id])
+            if not isinstance(clean, Graph):  # to_rdf failed on this case, or didn't return RDF
+                r.fail(f"{case.id}: no RDF from to_rdf to validate")
+                continue
+            try:
+                conforms, _, text = validate(clean, shacl_graph=shapes, inference="none")
+            except Exception as e:  # noqa: BLE001
+                r.fail(f"{case.id}: pyshacl couldn't validate with your shapes: {e}")
+                continue
             if conforms:
                 right += 1
             else:
@@ -198,10 +295,14 @@ def _shapes(module, practice, data, r: Result) -> None:
                 r.fail(f"{case.id}: the clean case doesn't conform. {first}")
             for label, broken in _broken(case).items():
                 total += 1
-                g = attempt(r, module.to_rdf, broken)
-                if g is None:
+                g = _union(attempt(r, module.to_rdf, broken))
+                if not isinstance(g, Graph):
                     continue
-                conforms, _, _ = validate(_union(g), shacl_graph=shapes, inference="none")
+                try:
+                    conforms, _, _ = validate(g, shacl_graph=shapes, inference="none")
+                except Exception as e:  # noqa: BLE001
+                    r.fail(f"{case.id}: pyshacl couldn't validate {label} with your shapes: {e}")
+                    continue
                 if conforms:
                     r.fail(f"{case.id}: {label} passes your shapes")
                 else:

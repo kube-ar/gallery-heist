@@ -21,7 +21,7 @@ DIAGNOSES = ("grounding", "knowledge", "retrieval", "reasoning", "none")
 def execution_graph(desk: Precinct) -> Any:
     """A node per desk call (step, tool, arguments, minute, cost, ok), NEXT between consecutive calls,
     and, if there was an accusation, a node for it with CITES edges to the calls whose kind of source
-    its evidence names."""
+    its evidence names (heist.precinct.cited_sources reads them the way the chief does)."""
     raise NotImplementedError
 
 

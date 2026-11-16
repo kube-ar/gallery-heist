@@ -8,7 +8,8 @@ from types import ModuleType
 
 from .. import answers
 from ..case import Case, list_cases, load_case
-from .core import NotStarted, Result, attempt, tally
+from ..llm import LLMError
+from .core import NotStarted, Result, attempt, model_for, tally
 
 PACKS = ("practice", "easy", "medium", "hard")
 L_LEXICAL = ("graphrag", "lexical-graph", "Lexical graph")
@@ -113,14 +114,19 @@ def _linking(module, cases, r: Result) -> None:
                 if got is None:
                     continue
                 gold_total += len(gold)
+                matched: set[int] = set()  # each gold mention counts once: a second span on it is a false positive
                 for start, end, pid in got:
                     if pid is None:
                         continue
                     predicted += 1
-                    hit = any(a < end and start < b and pid == who for a, b, who in gold)
-                    correct += hit
-                    if not hit and len(r.details) < 6:
-                        r.details.append(f"{case.id} · {doc.doc_id}: {doc.text[start:end]!r} isn't {pid}")
+                    overlaps = [i for i, (a, b, who) in enumerate(gold) if a < end and start < b and pid == who]
+                    hit = next((i for i in overlaps if i not in matched), None)
+                    if hit is not None:
+                        matched.add(hit)
+                        correct += 1
+                    elif len(r.details) < 6:
+                        why = "was already found once" if overlaps else f"isn't {pid}"
+                        r.details.append(f"{case.id} · {doc.doc_id}: {doc.text[start:end]!r} {why}")
     except NotStarted:
         return
     precision = correct / predicted if predicted else 0.0
@@ -134,13 +140,8 @@ def _linking(module, cases, r: Result) -> None:
 
 
 def _claims(module, cases, r: Result) -> None:
-    from ..llm import LLMError, get_llm
-
-    try:
-        llm = get_llm()
-    except LLMError as e:
-        r.started = r.passed = False
-        r.notes.append(f"Needs an LLM: {e}. Then run `uv run heist llm`.")
+    llm = model_for(r)
+    if llm is None:
         return
     tp = fp = fn = 0
     times = timed = 0

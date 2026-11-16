@@ -207,3 +207,111 @@ def test_conversation_loop_on_openai_compatible(monkeypatch):
     assert sent[0]["tools"][0]["function"]["name"] == "lookup"
     assert sent[1]["messages"][-1] == {"role": "tool", "tool_call_id": "c1", "content": "ok"}
     assert sent[1]["messages"][-2]["tool_calls"][0]["function"]["arguments"] == '{"q": "x"}'
+
+
+def test_a_cut_off_answer_is_tried_once_more(monkeypatch):
+    """Reasoning models sometimes think past the length limit; the second try usually finishes."""
+    finishes = iter(["length", "stop"])
+
+    def create(**request):
+        message = SimpleNamespace(content='{"ok": true}', refusal=None)
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=message, finish_reason=next(finishes))],
+            usage=SimpleNamespace(prompt_tokens=7, completion_tokens=2),
+        )
+
+    client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    monkeypatch.setattr(openai, "OpenAI", lambda **kw: client)
+    monkeypatch.setenv("FIREWORKS_API_KEY", "k")
+    llm = get_llm("fireworks", "m")
+    assert llm.json("q", SCHEMA) == {"ok": True}
+    assert llm.usage.calls == 2
+
+
+def test_a_cut_off_turn_is_tried_once_more(monkeypatch):
+    """A Conversation turn that hits the length limit is sent again, with the same history."""
+    from heist.llm import Conversation
+
+    replies = [
+        SimpleNamespace(content=[], stop_reason="max_tokens", usage=SimpleNamespace(input_tokens=5, output_tokens=9)),
+        SimpleNamespace(content=[SimpleNamespace(type="text", text="done")], stop_reason="end_turn",
+                        usage=SimpleNamespace(input_tokens=5, output_tokens=1)),
+    ]  # fmt: skip
+    sent = []
+
+    class Fake:
+        def __init__(self, **kw):
+            def create(**request):
+                sent.append([dict(m) for m in request["messages"]])
+                return replies[len(sent) - 1]
+
+            self.messages = SimpleNamespace(create=create)
+            self.beta = SimpleNamespace(messages=SimpleNamespace(create=create))
+
+    monkeypatch.setattr(anthropic, "Anthropic", Fake)
+    convo = Conversation(get_llm("anthropic"), [], system="s")
+    turn = convo.send("go")
+    assert turn.done and turn.text == "done"
+    assert sent[0] == sent[1] == [{"role": "user", "content": "go"}]
+
+
+def test_no_llm_skips_the_model_checks(monkeypatch):
+    from heist.checks.core import Result, model_for
+
+    monkeypatch.setenv("HEIST_LLM_PROVIDER", "anthropic")
+    monkeypatch.setattr(llm_mod, "NO_LLM", True)
+    with pytest.raises(llm_mod.Skipped):
+        get_llm()
+    r = Result("agent", None)
+    assert model_for(r) is None
+    assert not r.started and "--no-llm" in r.notes[0]
+
+
+def test_a_model_failure_reaches_the_check():
+    """attempt() lets LLMError through, so the check says the model call failed, not that your code did."""
+    from heist.checks.core import Result, attempt
+
+    def investigate():
+        raise LLMError("the key in ANTHROPIC_API_KEY was rejected")
+
+    with pytest.raises(LLMError):
+        attempt(Result("agent", None), investigate)
+
+
+def test_llm_command_tries_a_tool_call(monkeypatch, capsys):
+    from heist import cli
+    from heist.llm import ToolCall, Turn
+
+    class FakeLLM:
+        provider, model, effort = SimpleNamespace(name="openrouter"), "some/model", None
+        usage = SimpleNamespace(calls=4, input_tokens=40, output_tokens=8)
+
+        def text(self, prompt):
+            return "ready"
+
+        def json(self, prompt, schema):
+            return {"answer": False, "why": "an archway has no door"}
+
+    class Calls:
+        def __init__(self, llm, tools, system=None):
+            self.results = None
+
+        def send(self, text):
+            return Turn("", [ToolCall("c1", "add", {"a": 17, "b": 25})])
+
+        def reply(self, results, errors=frozenset()):
+            self.results = results
+            return Turn(str(results["c1"]["sum"]), [])
+
+    class NoTools(Calls):
+        def send(self, text):
+            return Turn("42", [])
+
+    monkeypatch.setattr(llm_mod, "get_llm", lambda: FakeLLM())
+    monkeypatch.setattr(llm_mod, "Conversation", Calls)
+    cli.cmd_llm(None)
+    assert "tools: called add" in capsys.readouterr().out
+    monkeypatch.setattr(llm_mod, "Conversation", NoTools)
+    with pytest.raises(SystemExit) as stopped:
+        cli.cmd_llm(None)
+    assert "without calling the tool" in str(stopped.value)

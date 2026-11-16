@@ -4,8 +4,10 @@ heist cases                 list the case packs
 heist show practice/case-01 print a case's briefing
 heist check 1               run milestone 1's checks on your code
 heist check 1 --reference   ...on the reference solution, to see what passing looks like
+heist check d3 --no-llm     ...without the checks that call your model (they cost money)
 heist use-reference 1       replace your file with the reference (yours is kept as .mine.py)
 heist use-reference 1 --undo
+heist llm                   check your model setup (.env): text, JSON and one tool call
 heist generate --seed 7 --level hard   a brand-new case in cases/mine/
 """
 
@@ -14,6 +16,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import importlib.util
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -45,7 +48,10 @@ def cmd_show(args) -> None:
 
 
 def cmd_check(args) -> None:
+    from . import llm
+
     m = _milestone(args.milestone)
+    llm.NO_LLM = args.no_llm
     if args.reference:
         path = ROOT / m.reference
         spec = importlib.util.spec_from_file_location(f"reference_{m.id}", path)
@@ -59,7 +65,17 @@ def cmd_check(args) -> None:
     from .checks.core import report
 
     print(f"Running milestone {m.id} on {'the reference solution' if args.reference else m.file}…")
-    ok = report(m, checks.run(module), args.lang)
+    try:
+        results = checks.run(module)
+    except llm.LLMError as e:  # your code called a model where no check expects one
+        sys.exit(f"A model call failed during a check that doesn't need one: {e}")
+    ok = report(m, results, args.lang)
+    used = llm.SESSION
+    if used.calls or used.cached:  # what the run cost, so you can see it before your provider's bill does
+        print(f"LLM use: {used.calls} calls ({used.cached} answers from the cache), "
+              f"{used.input_tokens:,} tokens in, {used.output_tokens:,} out")  # fmt: skip
+    if args.no_llm:
+        print("The checks that call your model were skipped (--no-llm).")
     sys.exit(0 if ok else 1)
 
 
@@ -104,9 +120,29 @@ def cmd_generate(args) -> None:
     print(f"wrote {folder} · load it with load_case({name!r})")
 
 
-def cmd_llm(args) -> None:
-    from .llm import LLMError, get_llm
+ADD = {
+    "name": "add",
+    "description": "Adds two whole numbers.",
+    "parameters": {
+        "type": "object",
+        "properties": {"a": {"type": "integer"}, "b": {"type": "integer"}},
+        "required": ["a", "b"],
+        "additionalProperties": False,
+    },
+}
 
+
+def _add(arguments: dict) -> dict:
+    try:
+        return {"sum": int(arguments["a"]) + int(arguments["b"])}
+    except (KeyError, TypeError, ValueError):
+        return {"error": "add takes two whole numbers, a and b"}
+
+
+def cmd_llm(args) -> None:
+    from .llm import Conversation, LLMError, get_llm
+
+    os.environ["HEIST_LLM_CACHE"] = "0"  # a setup check has to reach the provider, not read last time's answers
     try:
         llm = get_llm()
         print(f"Provider {llm.provider.name}, model {llm.model}" + (f", effort {llm.effort}" if llm.effort else ""))
@@ -121,9 +157,23 @@ def cmd_llm(args) -> None:
             },
         )
         print("json:", answer)
-        print(f"OK: {llm.usage.calls} calls, {llm.usage.input_tokens} tokens in, {llm.usage.output_tokens} out.")
     except LLMError as e:
         sys.exit(f"LLM setup problem: {e}")
+    # The agent milestones talk to the model through tool calls: try one round trip.
+    no_tools = ("The model works for text and JSON (milestones 3 and 4), but the agent milestones (d1-d5, d8) "
+                "need one that calls tools: pick another HEIST_LLM_MODEL.")  # fmt: skip
+    try:
+        convo = Conversation(llm, [ADD], system="You answer arithmetic with the add tool.")
+        turn = convo.send("What is 17 + 25? Use the add tool, then reply with the number.")
+        if turn.done:
+            sys.exit(f"LLM setup problem: the model answered {turn.text.strip()[:60]!r} without calling the "
+                     f"tool. {no_tools}")  # fmt: skip
+        asked = ", ".join(f"{c.name}({c.arguments})" for c in turn.tool_calls)
+        turn = convo.reply({c.id: _add(c.arguments) for c in turn.tool_calls})
+        print(f"tools: called {asked}, then replied {turn.text.strip()[:60]!r}")
+    except LLMError as e:
+        sys.exit(f"LLM setup problem with a tool call: {e}\n{no_tools}")
+    print(f"OK: {llm.usage.calls} calls, {llm.usage.input_tokens} tokens in, {llm.usage.output_tokens} out.")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -142,6 +192,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("milestone")
     p.add_argument("--reference", action="store_true", help="check the reference solution instead of your code")
     p.add_argument("--lang", default="en", choices=["en", "es"], help="language of the links to the lessons")
+    p.add_argument("--no-llm", action="store_true", help="skip the checks that call your model (they cost money)")
     p.set_defaults(fn=cmd_check)
 
     p = sub.add_parser("use-reference", help="swap your file for the reference solution")
@@ -149,7 +200,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--undo", action="store_true", help="put your own file back")
     p.set_defaults(fn=cmd_use_reference)
 
-    p = sub.add_parser("llm", help="check your LLM provider setup (.env) with two tiny calls")
+    p = sub.add_parser("llm", help="check your LLM provider setup (.env): text, JSON and a tool call")
     p.set_defaults(fn=cmd_llm)
 
     p = sub.add_parser("generate", help="build a new case (or rebuild a shipped pack)")
@@ -161,6 +212,9 @@ def main(argv: list[str] | None = None) -> None:
     p.set_defaults(fn=cmd_generate)
 
     args = parser.parse_args(argv)
+    from . import llm
+
+    llm._load_env()  # before anything runs: the model settings, and NEO4J_* for store(), come from .env
     args.fn(args)
 
 

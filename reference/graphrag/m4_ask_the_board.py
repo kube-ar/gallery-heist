@@ -1,7 +1,7 @@
 """Milestone 4 · Ask the board: a reference solution (the fast path: Neo4j, Cypher, a vector index).
 
-Spoilers. `heist use-reference 4` copies this over your file. It builds on your milestone 3 file
-(the linker), loaded from the same folder.
+Spoilers. `heist use-reference 4` copies this over your file. It uses the milestone 3 reference's
+linker, loaded from reference/graphrag/, so it works whatever your own milestone 3 file holds.
 """
 
 from __future__ import annotations
@@ -11,20 +11,20 @@ import os
 import re
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import networkx as nx
 from neo4j import GraphDatabase
 
-from heist.case import Case
+from heist.case import ROOT, Case
 from heist.vectors import embed
 
-HERE = Path(__file__).resolve().parent
+# By path from reference/, never from this file's folder: after `use-reference 4` that's your folder.
+M3 = ROOT / "reference" / "graphrag" / "m3_reading_statements.py"
 
 
 def _m3():
-    spec = importlib.util.spec_from_file_location("m3_for_m4", HERE / "m3_reading_statements.py")
+    spec = importlib.util.spec_from_file_location("m3_for_m4", M3)
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
@@ -198,7 +198,8 @@ Relationships: (Person)-[:HAS_PHONE]->(Phone), (Person)-[:WORKS_FOR]->(Company),
 (Swipe)-[:BY]->(Badge), (Swipe)-[:AT]->(Door), (Swipe)-[:INTO]->(Room), (Call)-[:FROM]->(Phone),
 (Call)-[:TO]->(Phone), (Account)-[:CONTACT]->(Phone), (Transfer)-[:FROM_ACCOUNT]->(Account),
 (Transfer)-[:TO_ACCOUNT]->(Account), (Chunk)-[:PART_OF]->(Document), (Chunk)-[:NEXT]->(Chunk),
-(Chunk)-[:MENTIONS]->(Person). Times are local datetimes."""
+(Chunk)-[:MENTIONS]->(Person). Times are local datetimes: compare them with localdatetime('2026-09-08T17:00'),
+never datetime(), which carries a time zone and matches nothing."""
 
 
 def generated_query(board: Board, question: str, llm: Any) -> list[dict]:
@@ -308,7 +309,8 @@ def global_answer(board: Board, question: str, llm: Any) -> set[str]:
             + "\n\n".join(f"{r['author']}: {r['text']}" for r in rows)
         )
         answer = llm.json(
-            f"Question: {question}\n\nAnswer only from this report, with the full names it gives.\n\n{report}",
+            f"Question: {question}\n\nAnswer only from this report. List the full names of the people it says "
+            f"answer the question, and no one else; an empty list when the report doesn't say.\n\n{report}",
             {
                 "type": "object",
                 "properties": {"names": {"type": "array", "items": {"type": "string"}}},

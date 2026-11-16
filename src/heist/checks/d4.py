@@ -5,8 +5,9 @@ from __future__ import annotations
 from types import ModuleType
 
 from ..case import list_cases, load_case
-from ..precinct import SOURCE_WORDS, Precinct
-from .core import NotStarted, Result, attempt, tally
+from ..llm import LLMError
+from ..precinct import Precinct, cited_sources
+from .core import NotStarted, Result, attempt, model_for, tally
 
 L_RELIABLE = ("agentic-graphrag", "agent-reliability", "Agent reliability")
 L_WORKFLOW = ("agentic-graphrag", "agent-workflow-graph", "Agent workflow graphs")
@@ -125,8 +126,7 @@ def official_problems(desk: Precinct, acc: dict) -> list[str]:
         found.add("same-person")
     if acc.get("method") not in ("insider", "borrowed_badge", "fire_door"):
         found.add("bad-method")
-    text = " ".join(acc.get("evidence", [])).lower()
-    cited = {k for k, words in SOURCE_WORDS.items() if any(w in text for w in words)}
+    cited = cited_sources(acc.get("evidence", []))
     if len(cited) < 2:
         found.add("too-few-sources")
     if cited - desk.consulted():
@@ -175,13 +175,8 @@ def _meaning(module, r: Result) -> None:
 
 
 def _agent(module, r: Result) -> None:
-    from ..llm import LLMError, get_llm
-
-    try:
-        llm = get_llm()
-    except LLMError as e:
-        r.started = r.passed = False
-        r.notes.append(f"Needs an LLM: {e}. Then run `uv run heist llm`.")
+    llm = model_for(r)
+    if llm is None:
         return
     try:
         accused = solved = calls = 0

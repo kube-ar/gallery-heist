@@ -33,6 +33,9 @@ def to_rdf(case: Case) -> Any:
     Name the graphs after the case folders: hr, events, vendors, security, facilities, telecom,
     finance. Every class and property you use must be declared in ONTOLOGY. Write events (a
     swipe, a call, a transfer) as nodes with their own properties, not as single edges.
+
+    The checks look for the seven graphs, and run your swipes_at on the security graph alone:
+    the keycard log, its doors and its badges are security's, so the swipes live there only.
     """
     raise NotImplementedError
 

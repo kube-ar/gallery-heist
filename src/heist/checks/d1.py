@@ -5,8 +5,9 @@ from __future__ import annotations
 from types import ModuleType
 
 from ..case import list_cases, load_case
+from ..llm import LLMError
 from ..precinct import Precinct
-from .core import NotStarted, Result, attempt, tally
+from .core import NotStarted, Result, attempt, model_for, tally
 
 L_WHAT = ("agentic-graphrag", "what-is-agentic-graphrag", "What is agentic GraphRAG?")
 L_GRAPHS = ("agentic-graphrag", "knowledge-graph-and-workflow-graph", "Knowledge graph and workflow graph")
@@ -87,14 +88,18 @@ def run(module: ModuleType) -> list[Result]:
     return [named, works]
 
 
-def _works(module, r: Result) -> None:
-    from ..llm import LLMError, get_llm
-
+def _labels(module, desk: Precinct) -> str:
+    """Your failures() on a real run, for the notes: "Failures, named" already says if it's wrong."""
     try:
-        llm = get_llm()
-    except LLMError as e:
-        r.started = r.passed = False
-        r.notes.append(f"Needs an LLM: {e}. Then run `uv run heist llm`.")
+        labels = module.failures(desk)
+    except Exception:  # NotImplementedError included
+        return "(failures() didn't run)"
+    return ", ".join(map(str, labels or [])) or "none"
+
+
+def _works(module, r: Result) -> None:
+    llm = model_for(r)
+    if llm is None:
         return
     accused = warrants = solved = 0
     names = list_cases("practice")
@@ -107,9 +112,8 @@ def _works(module, r: Result) -> None:
             accused += desk.accusation is not None
             warrants += verdict["warrant"]
             solved += verdict["solved"]
-            labels = module.failures(desk)
             r.notes.append(f"{name}: {len(desk.log)} calls, {desk.spent} min, "
-                           f"{'solved' if verdict['solved'] else 'not solved'}; failures: {', '.join(labels) or 'none'}")  # fmt: skip
+                           f"{'solved' if verdict['solved'] else 'not solved'}; failures: {_labels(module, desk)}")  # fmt: skip
     except NotStarted:
         return
     except LLMError as e:
@@ -117,5 +121,8 @@ def _works(module, r: Result) -> None:
         return
     r.score = f"{accused}/{len(names)} accused, {warrants} warrants, {solved} solved"
     if accused < len(names):
-        r.fail("The rookie has to reach an accusation on every practice case (it may be wrong).")
+        r.fail(
+            "The rookie has to reach an accusation on every practice case (it may be wrong). If it runs out of "
+            "turns, give it more turns or a clearer task, but keep it naive."
+        )
     r.notes.append(f"LLM: {llm.provider.name} {llm.model}, {llm.usage.calls} calls")

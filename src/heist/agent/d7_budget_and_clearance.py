@@ -33,7 +33,8 @@ def cost_per_solved(runs: list[tuple[float, bool]]) -> float:
 
 def restricted(desk: Precinct, role: str) -> Any:
     """A desk for a role: the same tools minus RESTRICTED[role], which aren't in its tools() and,
-    when called anyway, fail exactly like a tool that doesn't exist."""
+    when called anyway, fail exactly like a tool that doesn't exist. Everything else (log,
+    accusation, verdict()) is the wrapped desk's, so an agent can work at it like at any desk."""
     raise NotImplementedError
 
 

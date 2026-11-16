@@ -6,8 +6,9 @@ from types import ModuleType
 
 from .. import answers
 from ..case import Case, list_cases, load_case
+from ..llm import LLMError
 from ..precinct import Precinct, extract_facts
-from .core import NotStarted, Result, attempt, tally
+from .core import NotStarted, Result, attempt, model_for, tally
 
 L_MEMORY = ("agentic-graphrag", "graph-memory", "Graph memory")
 L_RETRIEVAL = ("agentic-graphrag", "memory-retrieval", "Memory retrieval")
@@ -123,7 +124,11 @@ def _clash(module, nb, case, facts, r: Result) -> None:
     have = {(c["person"], c["room"], c["at"]) for c in got or []}
     ok = have == want
     if not ok and got is not None:
-        r.fail(f"{case.id}: missed {len(want - have)}, flagged {len(have - want)} that the logs allow")
+        missed, extra = sorted(want - have, key=str), sorted(have - want, key=str)
+        r.fail(f"{case.id}: missed {len(missed)}, flagged {len(extra)} that the logs allow")
+        for label, rows in (("missed", missed), ("flagged", extra)):
+            for person, room, at in rows[:2]:
+                r.details.append(f"    {label}: {person} claims {room} at {at}")
     _count(r, ok, "cases")
 
 
@@ -165,13 +170,8 @@ def _rrf(module, r: Result) -> None:
 
 
 def _agent(module, r: Result) -> None:
-    from ..llm import LLMError, get_llm
-
-    try:
-        llm = get_llm()
-    except LLMError as e:
-        r.started = r.passed = False
-        r.notes.append(f"Needs an LLM: {e}. Then run `uv run heist llm`.")
+    llm = model_for(r)
+    if llm is None:
         return
     try:
         accused = solved = 0

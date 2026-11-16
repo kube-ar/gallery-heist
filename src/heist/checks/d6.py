@@ -6,7 +6,7 @@ import json
 from types import ModuleType
 
 from ..case import load_case
-from ..precinct import SOURCE_WORDS, TOOL_SOURCE, Precinct
+from ..precinct import TOOL_SOURCE, Precinct, cited_sources
 from .core import NotStarted, Result, attempt, tally
 
 L_EXEC = ("agentic-graphrag", "execution-graph", "Execution graph")
@@ -60,8 +60,7 @@ def scripted() -> dict[str, tuple[Precinct, str]]:
 
 
 def official_waste(desk: Precinct) -> int:
-    text = " ".join((desk.accusation or {}).get("evidence", [])).lower()
-    cited = {k for k, words in SOURCE_WORDS.items() if any(w in text for w in words)}
+    cited = cited_sources((desk.accusation or {}).get("evidence", []))
     return sum(a.cost for a in desk.log if a.ok and a.tool in TOOL_SOURCE and TOOL_SOURCE[a.tool] not in cited)
 
 

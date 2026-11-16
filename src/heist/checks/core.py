@@ -8,6 +8,7 @@ import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from ..llm import LLM, LLMError, Skipped, get_llm
 from ..milestones import Milestone, lesson_url
 
 MAX_DETAILS = 4
@@ -36,6 +37,7 @@ def attempt(result: Result, fn: Callable, *args, none_ok: bool = False, **kwargs
     """Call your function. NotImplementedError marks the check as not started.
 
     A None answer counts as a forgotten return, unless `none_ok` (None is a real answer there).
+    An LLMError goes up to the check, which says the model call failed (not that your code did).
     """
     try:
         value = fn(*args, **kwargs)
@@ -43,6 +45,8 @@ def attempt(result: Result, fn: Callable, *args, none_ok: bool = False, **kwargs
         result.started = False
         result.passed = False
         raise NotStarted from e
+    except LLMError:
+        raise
     except Exception:
         result.passed = False
         tb = traceback.format_exc().strip().splitlines()
@@ -52,6 +56,20 @@ def attempt(result: Result, fn: Callable, *args, none_ok: bool = False, **kwargs
     if value is None and not none_ok:
         result.fail(f"{getattr(fn, '__name__', 'your function')} returned None: did it forget a return?")
     return value
+
+
+def model_for(*results: Result) -> LLM | None:
+    """The model from .env for these checks, or None with them marked not started and a note why."""
+    try:
+        return get_llm()
+    except Skipped:
+        note = "Skipped: --no-llm. Run the check without it to try this part with your model."
+    except LLMError as e:
+        note = f"Needs an LLM: {e}. Then run `uv run heist llm`."
+    for r in results:
+        r.started = r.passed = False
+        r.notes.append(note)
+    return None
 
 
 def tally(result: Result, right: int, total: int, unit: str) -> None:

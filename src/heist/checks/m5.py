@@ -27,13 +27,24 @@ def run(module: ModuleType) -> list[Result]:
     return [solved, final, layers, judge, runs]
 
 
+def _answer(module, case, r: Result) -> dict:
+    """Your solve(case), or {} when it failed or isn't a dict (said once in the details)."""
+    got = attempt(r, module.solve, case)
+    if got is not None and not isinstance(got, dict):
+        line = f"solve returned a {type(got).__name__}: it returns a dict with culprit, accomplice and method"
+        if line not in r.details:
+            r.fail(line)
+        return {}
+    return got or {}
+
+
 def _solve(module, r: Result) -> None:
     by_pack: dict[str, list[int]] = {}
     culprits = accomplices = methods = total = 0
     for name in [n for pack in PACKS for n in list_cases(pack)]:
         case = load_case(name)
         crime = json.loads((case.path / "truth.json").read_text(encoding="utf-8"))["crime"]
-        got = attempt(r, module.solve, case) or {}
+        got = _answer(module, case, r)
         total += 1
         ok = got.get("culprit") == crime["culprit"]["native_id"]
         culprits += ok
@@ -58,7 +69,7 @@ def _final(module, r: Result) -> None:
     for name in names:
         case = load_case(name)
         hashes = json.loads((case.path / "answers.sha256.json").read_text(encoding="utf-8"))
-        got = attempt(r, module.solve, case) or {}
+        got = _answer(module, case, r)
         digest = hashlib.sha256(f"{hashes['salt']}:{got.get('culprit')}".encode()).hexdigest()
         right += digest == hashes["culprit"]
     r.score = f"{right}/{len(names)} solved"
