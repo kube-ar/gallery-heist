@@ -59,7 +59,7 @@ def neighborhood(graph: Any, doc_id: str, index: int) -> dict:
 
 
 def find_people(case: Case, doc: Document) -> list[tuple[int, int, str | None]]:
-    """Every mention of a person in doc.text, as (start, end, id).
+    """Every mention of a person in doc.text, once each, as (start, end, id).
 
     The id is an employee, guest or contractor id, or None when you can't tell who it is.
     People are written many ways: a full name, a first name, a surname, a nickname, a typo,

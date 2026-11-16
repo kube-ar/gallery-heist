@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import networkx as nx
 
-from heist.precinct import SOURCE_WORDS, TOOL_SOURCE, Precinct
+from heist.precinct import TOOL_SOURCE, Precinct, cited_sources
 
 DIAGNOSES = ("grounding", "knowledge", "retrieval", "reasoning", "none")
 
 
 def _cited(accusation: dict | None) -> set[str]:
-    text = " ".join((accusation or {}).get("evidence", [])).lower()
-    return {kind for kind, words in SOURCE_WORDS.items() if any(w in text for w in words)}
+    return cited_sources((accusation or {}).get("evidence", []))
 
 
 def execution_graph(desk: Precinct) -> nx.DiGraph:

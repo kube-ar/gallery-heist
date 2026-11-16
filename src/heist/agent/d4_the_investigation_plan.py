@@ -51,7 +51,10 @@ def validate_accusation(desk: Precinct, accusation: dict) -> list[str]:
     too-few-sources: the evidence cites fewer than two kinds of source.
     unconsulted-source: it cites a kind of source the desk never returned.
     no-unguarded-door: fire_door, but no door without a reader leads into the stolen painting's wing.
-    no-badge: insider, but the culprit holds no badge."""
+    no-badge: insider, but the culprit holds no badge.
+
+    heist.precinct.cited_sources(evidence) gives the kinds of source the evidence names, read the
+    way the chief reads them; desk.consulted() gives the kinds the desk returned."""
     raise NotImplementedError
 
 

@@ -2,9 +2,10 @@
 
 Instructions: https://kube.ar/agentic-graphrag/project/gallery-heist/the-rookie
 
-The board answered questions about files it already had. A detective has to go and get the
-evidence: interviews, logs and records from the precinct's desk, each costing minutes from the
-night's budget, until it's ready to ask the chief for a warrant (heist.precinct).
+A detective doesn't get the files at once (if you built the board in the GraphRAG part, it did).
+It has to go and get the evidence: interviews, logs and records from the precinct's desk, each
+costing minutes from the night's budget, until it's ready to ask the chief for a warrant
+(heist.precinct). This part needs no GraphRAG code and no Neo4j, only a model with tool calling.
 
 Build the simplest agent that can do it: one model, the desk's tools, a loop. Then read its runs
 and name what went wrong, with the five failures from the course's overview lesson. This rookie
@@ -26,8 +27,9 @@ FAILURES = ("context amnesia", "relationship blindness", "temporal ignorance", "
 def investigate(case: Case, llm: Any, max_turns: int = 40) -> Precinct:
     """Work the case at a Precinct desk with `llm` (heist.llm.Conversation helps), and return the desk.
 
-    Stop when the agent accuses, or after `max_turns` model turns. Don't accuse on its behalf:
-    a rookie that never makes up its mind is a failure worth seeing."""
+    Stop when the agent accuses, or after `max_turns` model turns. Don't accuse on its behalf.
+    The check needs an accusation on every practice case: if it runs out of turns, give it more
+    turns or a clearer task, but keep it naive."""
     raise NotImplementedError
 
 

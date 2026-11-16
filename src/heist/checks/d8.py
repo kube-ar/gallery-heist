@@ -5,7 +5,8 @@ from __future__ import annotations
 from types import ModuleType
 
 from ..case import list_cases, load_case
-from .core import NotStarted, Result, attempt, tally
+from ..llm import LLMError
+from .core import NotStarted, Result, attempt, model_for, tally
 
 L_END = ("agentic-graphrag", "agentic-graphrag-end-to-end", "Agentic GraphRAG end to end")
 
@@ -30,13 +31,8 @@ def run(module: ModuleType) -> list[Result]:
         tally(table, right, len(fixtures), "tables")
     except NotStarted:
         table.started = table.passed = False
-    from ..llm import LLMError, get_llm
-
-    try:
-        llm = get_llm()
-    except LLMError as e:
-        hard.started = hard.passed = False
-        hard.notes.append(f"Needs an LLM: {e}. Then run `uv run heist llm`.")
+    llm = model_for(hard)
+    if llm is None:
         return [table, hard]
     try:
         accused = solved = 0

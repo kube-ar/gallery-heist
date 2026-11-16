@@ -10,7 +10,8 @@ import networkx as nx
 
 from .. import answers
 from ..case import Case, list_cases, load_case
-from .core import NotStarted, Result, attempt, tally
+from ..llm import LLMError
+from .core import NotStarted, Result, attempt, model_for, tally
 
 L_DB = ("graphrag", "choosing-a-graph-database", "Graph database or PostgreSQL?")
 L_PATTERNS = ("graphrag", "graph-retrieval-patterns", "GraphRAG retrieval patterns")
@@ -89,6 +90,7 @@ def run(module: ModuleType) -> list[Result]:
     _validator(module, guard)
     _routes(module, routes)
     for case in cases():
+        before = len(stored.details)
         try:
             board = attempt(stored, module.store, case)
         except NotStarted:
@@ -96,7 +98,18 @@ def run(module: ModuleType) -> list[Result]:
                 r.started = r.passed = False
             break
         if board is None:
-            continue
+            # No board, nothing to ask: every check that needs one fails, instead of passing unchecked.
+            # The model checks run on practice/case-01 only, so they fail only when that's the case without one.
+            raised = any(" raised: " in d for d in stored.details[before:])
+            hint = ("Is Neo4j running? `docker compose up -d`, and NEO4J_PASSWORD in .env must match it."
+                    if raised else "store() has to return the board.")  # fmt: skip
+            stored.passed = False
+            stored.details.insert(before, f"{case.id}: no board, so the checks stop here. {hint}")
+            needs = [templates, search, groups] + ([generated, global_q] if case.id == "practice/case-01" else [])
+            for r in needs:
+                if r.started:
+                    r.fail(f"not checked: store() gave no board for {case.id}. {hint}")
+            break
         for check, r in ((_summary, stored), (_templates, templates), (_search, search), (_communities, groups)):
             if r.started:
                 try:
@@ -104,10 +117,7 @@ def run(module: ModuleType) -> list[Result]:
                 except NotStarted:
                     r.started = r.passed = False
         if case.id == "practice/case-01":
-            try:
-                _llm_checks(module, case, board, generated, global_q)
-            except NotStarted:
-                pass
+            _llm_checks(module, case, board, generated, global_q)
     return results
 
 
@@ -282,15 +292,23 @@ def _communities(module, case: Case, board, r: Result) -> None:
 
 
 def _llm_checks(module, case: Case, board, generated: Result, global_q: Result) -> None:
-    from ..llm import LLMError, get_llm
-
-    try:
-        llm = get_llm()
-    except LLMError as e:
-        for r in (generated, global_q):
-            r.started = r.passed = False
-            r.notes.append(f"Needs an LLM: {e}. Then run `uv run heist llm`.")
+    llm = model_for(generated, global_q)
+    if llm is None:
         return
+    for check, r in ((_generated, generated), (_global, global_q)):  # each its own check, whatever the other did
+        try:
+            check(module, case, board, llm, r)
+        except NotStarted:
+            pass
+        except LLMError as e:
+            r.fail(f"the LLM call failed: {e}")
+    if global_q.started:
+        global_q.notes.append(
+            f"LLM: {llm.provider.name} {llm.model}, {llm.usage.calls} calls ({llm.usage.cached} cached)"
+        )
+
+
+def _generated(module, case: Case, board, llm, r: Result) -> None:
     night = (case.at("17:00"), case.at("17:00") + timedelta(hours=9))
     calls = sum(night[0] <= c.start < night[1] for c in case.calls)
     big = sum(t.amount > 1000 for t in case.transfers)
@@ -299,29 +317,26 @@ def _llm_checks(module, case: Case, board, generated: Result, global_q: Result) 
         "How many bank transfers had an amount greater than 1000?": big,
     }
     right = 0
-    try:
-        for question, want in asks.items():
-            rows = attempt(generated, module.generated_query, board, question, llm) or []
-            values = [v for row in rows for v in (row.values() if isinstance(row, dict) else [row])]
-            ok = want in values
-            right += ok
-            if not ok:
-                generated.fail(f"{question} → {values[:5]} (want {want})")
-        tally(generated, right, len(asks), "questions")
-        truth = json.loads((case.path / "truth.json").read_text(encoding="utf-8"))
-        native = {p["id"]: next((k for k in p["keys"] if k[:2] in ("E-", "G-", "C-")), None) for p in truth["people"]}
-        want = {native[c["subject"]] for d in truth["documents"].values() for c in d["claims"]
-                if c["predicate"] == "money_trouble"}  # fmt: skip
-        got = attempt(global_q, module.global_answer, board, "Who do the documents say is short of money?", llm)
-        if got is not None:
-            got = set(got)
-            recall = len(got & want) / len(want) if want else 1.0
-            precision = len(got & want) / len(got) if got else 0.0
-            global_q.score = f"precision {precision:.2f}, recall {recall:.2f}"
-            if recall < 1.0 or precision < 0.5:
-                global_q.fail(f"got {sorted(got)}, want {sorted(want)}")
-        global_q.notes.append(
-            f"LLM: {llm.provider.name} {llm.model}, {llm.usage.calls} calls ({llm.usage.cached} cached)"
-        )
-    except LLMError as e:
-        generated.fail(f"the LLM call failed: {e}")
+    for question, want in asks.items():
+        rows = attempt(r, module.generated_query, board, question, llm) or []
+        values = [v for row in rows for v in (row.values() if isinstance(row, dict) else [row])]
+        ok = want in values
+        right += ok
+        if not ok:
+            r.fail(f"{question} → {values[:5]} (want {want})")
+    tally(r, right, len(asks), "questions")
+
+
+def _global(module, case: Case, board, llm, r: Result) -> None:
+    truth = json.loads((case.path / "truth.json").read_text(encoding="utf-8"))
+    native = {p["id"]: next((k for k in p["keys"] if k[:2] in ("E-", "G-", "C-")), None) for p in truth["people"]}
+    want = {native[c["subject"]] for d in truth["documents"].values() for c in d["claims"]
+            if c["predicate"] == "money_trouble"}  # fmt: skip
+    got = attempt(r, module.global_answer, board, "Who do the documents say is short of money?", llm)
+    if got is not None:
+        got = set(got)
+        recall = len(got & want) / len(want) if want else 1.0
+        precision = len(got & want) / len(got) if got else 0.0
+        r.score = f"precision {precision:.2f}, recall {recall:.2f}"
+        if recall < 1.0 or precision < 0.5:
+            r.fail(f"got {sorted(got)}, want {sorted(want)}")

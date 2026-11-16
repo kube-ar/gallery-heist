@@ -44,9 +44,11 @@ def believed_at(notebook: Any, person: str, at: str, as_of: int | None = None) -
 def conflicts(notebook: Any, case: Case) -> list[dict]:
     """The claimed facts that the observations rule out, as {"person", "room", "at"}.
 
-    A claim is ruled out when every observed position of that person from 10 minutes before the
-    claim's time to 10 minutes after is somewhere the claimed room can't be reached from without
-    a card reader (no observations then: not ruled out)."""
+    For each claim, take that person's observations from 10 minutes before the claim's time to
+    10 minutes after it (before < at <= after), plus their last observation before that span
+    (where they were as it began). The claim is ruled out when every one of these is somewhere
+    the claimed room can't be reached from without a card reader. A claim with none of these
+    stands."""
     raise NotImplementedError
 
 

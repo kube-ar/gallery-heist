@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 from heist.case import Case
-from heist.precinct import SOURCE_WORDS, Precinct
+from heist.precinct import Precinct, cited_sources
 
 KINDS = ("reasoning", "execution", "decision", "validation")
 PROBLEMS = ("unknown-person", "same-person", "bad-method", "too-few-sources", "unconsulted-source",
@@ -57,8 +57,7 @@ def validate_accusation(desk: Precinct, accusation: dict) -> list[str]:
     method = accusation.get("method")
     if method not in ("insider", "borrowed_badge", "fire_door"):
         found.add("bad-method")
-    text = " ".join(accusation.get("evidence", [])).lower()
-    cited = {kind for kind, words in SOURCE_WORDS.items() if any(w in text for w in words)}
+    cited = cited_sources(accusation.get("evidence", []))
     if len(cited) < 2:
         found.add("too-few-sources")
     if cited - desk.consulted():

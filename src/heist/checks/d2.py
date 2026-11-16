@@ -6,8 +6,9 @@ import re
 from types import ModuleType
 
 from ..case import list_cases, load_case
+from ..llm import LLMError
 from ..precinct import RULEBOOK, records
-from .core import NotStarted, Result, attempt, tally
+from .core import NotStarted, Result, attempt, model_for, tally
 
 L_RULES = ("agentic-graphrag", "business-rules-in-the-graph", "Business rules in the knowledge graph")
 L_ONTO = ("agentic-graphrag", "ontology-driven-retrieval", "Ontology-driven retrieval")
@@ -98,6 +99,9 @@ def _describe(module, r: Result) -> None:
             total += 1
             got = attempt(r, module.describe, case, node_id, spec)
             want = official_describe(case, node_id, spec)
+            if "error" in want and node_id != "X-404":  # every kind of record here needs an entry in SPEC
+                r.fail(f"{name} · describe({node_id!r}): no entry in SPEC matches this kind of record")
+                continue
             ok = (got or {}).get("error") is not None if "error" in want else got == want
             right += ok
             if not ok and got is not None:
@@ -114,13 +118,8 @@ def _describe(module, r: Result) -> None:
 
 
 def _agent(module, r: Result) -> None:
-    from ..llm import LLMError, get_llm
-
-    try:
-        llm = get_llm()
-    except LLMError as e:
-        r.started = r.passed = False
-        r.notes.append(f"Needs an LLM: {e}. Then run `uv run heist llm`.")
+    llm = model_for(r)
+    if llm is None:
         return
     try:
         for distract in (False, True):

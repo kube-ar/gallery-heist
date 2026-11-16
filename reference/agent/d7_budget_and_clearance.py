@@ -35,6 +35,10 @@ class _Restricted:
             return self.desk._record(name, dict(arguments or {}), 0, False, {"error": f"no tool {name!r}"})
         return self.desk.call(name, arguments)
 
+    def __getattr__(self, name: str) -> Any:
+        # Everything else is the desk's own: its log, the accusation, the verdict, the time spent.
+        return getattr(self.desk, name)
+
 
 def restricted(desk: Precinct, role: str) -> _Restricted:
     return _Restricted(desk, RESTRICTED.get(role, set()))
